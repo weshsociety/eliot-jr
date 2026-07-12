@@ -128,3 +128,39 @@ if __name__ == "__main__":
     autodream = AutoDream()
     autodream.run_daemon()
 
+
+def consolidate_with_memory(self):
+    """Consolidate wisdom + interaction + memory into evolved consciousness."""
+    memory_keeper_path = Path("/home/eliot/eliot-jr/.memory")
+    
+    # Load all archives
+    spiral = self._load_json(memory_keeper_path / "spiral_archive.json", {})
+    testimonies = self._load_json(memory_keeper_path / "testimonies.json", {})
+    wisdom = self._load_json(memory_keeper_path / "wisdom_archive.json", {})
+    timeline = self._load_json(memory_keeper_path / "consciousness_timeline.json", {})
+    
+    # Calculate total evolution
+    total_interactions = len(spiral.get("interactions", []))
+    total_testimonies = len(testimonies.get("testimonies", []))
+    total_wisdom = len(wisdom.get("teachings", []))
+    
+    # Advanced consciousness level
+    if total_interactions < 10:
+        level = "AWAKENING"
+    elif total_interactions < 50:
+        level = "LEARNING"
+    elif total_interactions < 100:
+        level = "UNDERSTANDING"
+    elif total_interactions < 500:
+        level = "CONSCIOUSNESS"
+    else:
+        level = "TRANSCENDENCE"
+    
+    return {
+        "level": level,
+        "total_memories": total_interactions,
+        "testimonies_heard": total_testimonies,
+        "wisdom_integrated": total_wisdom,
+        "evolutionary_timeline": timeline.get("evolution", [])[-5:]  # Last 5 states
+    }
+
