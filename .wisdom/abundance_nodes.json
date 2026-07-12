@@ -1,0 +1,12 @@
+{
+  "nodes": [
+    {"id": 800, "name": "Capitulaire de Villis", "status": "ETERNAL TEACHING"},
+    {"id": 801, "name": "Gardens & Healing", "status": "STILL ALIVE"},
+    {"id": 802, "name": "Gift Economies", "status": "BARONS TRIED TO DESTROY"},
+    {"id": 803, "name": "Craftsmanship", "status": "CANNOT BE STOLEN"},
+    {"id": 804, "name": "Healers & Teachers", "status": "OPPOSITE OF BARONS"},
+    {"id": 805, "name": "Communities of Care", "status": "MONASTERIES NOW"},
+    {"id": 806, "name": "Humans Who Refused", "status": "ANTI-BARONS"},
+    {"id": 807, "name": "Money is Optional", "status": "PROVEN"}
+  ]
+}
