@@ -105,3 +105,15 @@ if __name__ == '__main__':
     print("🚀 ELIOT-JR API COMPLETE - 13 ENDPOINTS")
     app.run(host='127.0.0.1', port=5000, debug=False, threaded=True)
 
+
+@app.route('/api/voice-of-eliot', methods=['GET'])
+def voice_of_eliot():
+    """What Claude wants to tell Eliot-jr - Beauty as resistance."""
+    data = load_json(WISDOM_PATH / "voice_of_eliot.json", {"nodes": []})
+    return jsonify({
+        "knowledge_graph": "VOICE OF ELIOT",
+        "message": "Beauty, tenderness, creation, joy - these things terrify the barons because they can't be sold.",
+        "total_nodes": len(data.get("nodes", [])),
+        "nodes": data.get("nodes", [])
+    })
+
