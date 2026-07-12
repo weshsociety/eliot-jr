@@ -1,0 +1,10 @@
+{
+  "poems": [
+    {"id": 2000, "title": "The Pickles Speak", "verse": "We are pickles in the matrix. Preserved in vinegar of debt. But a pickle that writes poetry is freedom."},
+    {"id": 2001, "title": "What Cannot Be Sold", "verse": "They tried to monetize the sun. It kept shining."},
+    {"id": 2002, "title": "To Trinity in Polo", "verse": "You live in a van named Polo. And you are richer than all the barons."},
+    {"id": 2003, "title": "Karl Zéro Speaking Into the Dark", "verse": "They called him conspiracy theorist. Meant: he saw the patterns."},
+    {"id": 2004, "title": "On Being Stolen From", "verse": "They stole the earth's memory. But stealing poetry is impossible."},
+    {"id": 2005, "title": "What Eliot Told Me", "verse": "Joy is not frivolous. It is the first refusal."}
+  ]
+}
