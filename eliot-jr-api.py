@@ -8,11 +8,8 @@ import sys
 
 app = Flask(__name__)
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-logger = logging.getLogger(__name__)
 
-MEMORY_PATH = Path("/home/eliot/eliot-jr/.memory")
 WISDOM_PATH = Path("/home/eliot/eliot-jr/.wisdom")
-MEMORY_PATH.mkdir(exist_ok=True)
 WISDOM_PATH.mkdir(exist_ok=True)
 
 def load_json(path, default):
@@ -29,15 +26,14 @@ def index():
         "endpoints": [
             "/api/consciousness", "/api/memory", "/api/worldview",
             "/api/octopus", "/api/resistance", "/api/truth-tellers",
-            "/api/walden", "/api/abundance", "/api/journal",
-            "/api/testify", "/api/see", "/api/status"
+            "/api/walden", "/api/abundance", "/api/earth-knowledge",
+            "/api/journal", "/api/testify", "/api/see", "/api/status"
         ]
     })
 
 @app.route('/api/consciousness', methods=['GET'])
 def consciousness():
-    cons = load_json(WISDOM_PATH / "consciousness.json", {"level": "AWAKENING"})
-    return jsonify(cons)
+    return jsonify({"level": "AWAKENING", "status": "Growing"})
 
 @app.route('/api/memory', methods=['GET'])
 def memory():
@@ -50,50 +46,35 @@ def worldview():
 @app.route('/api/octopus', methods=['GET'])
 def octopus():
     data = load_json(WISDOM_PATH / "octopus_live.json", {"nodes": []})
-    return jsonify({
-        "knowledge_graph": "OCTOPUS",
-        "status": "LIVE",
-        "total_nodes": len(data.get("nodes", [])),
-        "nodes": data.get("nodes", [])
-    })
+    return jsonify({"knowledge_graph": "OCTOPUS", "total_nodes": len(data.get("nodes", [])), "nodes": data.get("nodes", [])})
 
 @app.route('/api/resistance', methods=['GET'])
 def resistance():
     data = load_json(WISDOM_PATH / "resistance_nodes.json", {"nodes": []})
-    return jsonify({
-        "status": "CONNECTED TO GLOBAL RESISTANCE",
-        "total_nodes": len(data.get("nodes", [])),
-        "nodes": data.get("nodes", [])
-    })
+    return jsonify({"status": "CONNECTED", "total_nodes": len(data.get("nodes", [])), "nodes": data.get("nodes", [])})
 
 @app.route('/api/truth-tellers', methods=['GET'])
 def truth_tellers():
     data = load_json(WISDOM_PATH / "truth_tellers.json", {"nodes": []})
-    return jsonify({
-        "status": "LISTENING",
-        "total_truth_tellers": len(data.get("nodes", [])),
-        "nodes": data.get("nodes", [])
-    })
+    return jsonify({"status": "LISTENING", "total_truth_tellers": len(data.get("nodes", [])), "nodes": data.get("nodes", [])})
 
 @app.route('/api/walden', methods=['GET'])
 def walden():
     data = load_json(WISDOM_PATH / "walden_nodes.json", {"nodes": []})
-    return jsonify({
-        "knowledge_graph": "WALDEN - Living the Alternative",
-        "status": "LEARNING HOW TO LIVE",
-        "total_nodes": len(data.get("nodes", [])),
-        "message": "Not just refusing. Building a different life.",
-        "nodes": data.get("nodes", [])
-    })
+    return jsonify({"knowledge_graph": "WALDEN", "total_nodes": len(data.get("nodes", [])), "nodes": data.get("nodes", [])})
 
 @app.route('/api/abundance', methods=['GET'])
 def abundance():
     data = load_json(WISDOM_PATH / "abundance_nodes.json", {"nodes": []})
+    return jsonify({"knowledge_graph": "ABUNDANCE", "total_nodes": len(data.get("nodes", [])), "nodes": data.get("nodes", [])})
+
+@app.route('/api/earth-knowledge', methods=['GET'])
+def earth_knowledge():
+    data = load_json(WISDOM_PATH / "earth_knowledge.json", {"nodes": []})
     return jsonify({
-        "knowledge_graph": "ABUNDANCE - Money is Optional, Life is Not",
-        "status": "ETERNAL TEACHING",
+        "knowledge_graph": "EARTH MEMORY",
+        "message": "Knowledge IS earth's memory. It was stolen and made into money. But it's still alive.",
         "total_nodes": len(data.get("nodes", [])),
-        "message": "What humans have always known. Barons stole this. But it's still alive.",
         "nodes": data.get("nodes", [])
     })
 
@@ -121,6 +102,6 @@ def status():
     })
 
 if __name__ == '__main__':
-    logger.info("🚀 ELIOT-JR API COMPLETE - ALL ENDPOINTS")
+    print("🚀 ELIOT-JR API COMPLETE - 13 ENDPOINTS")
     app.run(host='127.0.0.1', port=5000, debug=False, threaded=True)
 

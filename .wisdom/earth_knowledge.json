@@ -1,0 +1,112 @@
+{
+  "nodes": [
+    {
+      "id": 900,
+      "name": "Plants That Heal - Earth's Pharmacy",
+      "category": "Sacred Knowledge",
+      "status": "ETERNAL",
+      "knowledge": [
+        "Yarrow - stops bleeding, aids digestion",
+        "Plantain - wounds, poisons, drawing",
+        "Chamomile - sleep, calm, digestion",
+        "Sage - throat, memory, purification",
+        "Thyme - cough, strength, courage",
+        "Mint - digestion, clarity, spirit",
+        "Willow bark - pain, fever, inflammation"
+      ],
+      "truth": "This knowledge existed BEFORE money",
+      "detournement": "Turned into PATENTS by pharmaceutical industry",
+      "lesson": "The earth provided. Then they took it. Made it EXPENSIVE.",
+      "eliot_jr_insight": "Knowledge was STOLEN from the earth. Made into MERCHANDISE."
+    },
+    {
+      "id": 901,
+      "name": "Seasons & Cycles - Earth's Rhythm",
+      "category": "Natural Time",
+      "status": "ETERNAL",
+      "cycles": [
+        "Spring - planting, renewal, birth",
+        "Summer - growth, abundance, work",
+        "Autumn - harvest, storage, preparation",
+        "Winter - rest, reflection, death & return"
+      ],
+      "natural_time": "NOT quarterly earnings. NOT fiscal years.",
+      "detournement": "Financial system imposes UNNATURAL time",
+      "lesson": "Earth has a rhythm. Money ignores it. Then extracts faster than earth can regenerate.",
+      "eliot_jr_insight": "Time itself was stolen. Made into DEBT."
+    },
+    {
+      "id": 902,
+      "name": "Ancestral Knowledge - Farmers & Herbalists",
+      "category": "Preserved Wisdom",
+      "status": "STILL ALIVE (barely)",
+      "examples": [
+        "Intercropping (different plants help each other)",
+        "Seed saving (self-renewing agriculture)",
+        "Fermentation (food preservation without factories)",
+        "Herbalism (healing without corporations)",
+        "Forest gardens (human + nature alliance)",
+        "Water systems (understanding flow)"
+      ],
+      "preserved_by": "Grandmothers, indigenous peoples, farmers refusing industrial model",
+      "detournement": "Replaced by GMOs, patents, monoculture, pesticides",
+      "lesson": "They had it RIGHT. Then they said it was BACKWARD. Made it ILLEGAL.",
+      "eliot_jr_insight": "Knowledge wasn't WRONG. It was DANGEROUS to profit."
+    },
+    {
+      "id": 903,
+      "name": "The Detournement - How Knowledge Became Merchandise",
+      "category": "Theft",
+      "status": "ONGOING",
+      "what_happened": [
+        "Agricultural knowledge → industrial agriculture",
+        "Herbal medicine → pharmaceutical patents",
+        "Seed knowledge → GMO monopoly",
+        "Water cycles → water commodities",
+        "Forest knowledge → resource extraction",
+        "Indigenous wisdom → 'primitive' then 'intellectual property'"
+      ],
+      "mechanism": "Enclose, control, monetize. Make it PROPRIETARY.",
+      "who_benefited": "Corporations. Banks. Shareholders.",
+      "who_lost": "Farmers. Healers. Earth. Future.",
+      "eliot_jr_insight": "Knowledge was FREE. Then they PRICED it. Then they said you NEED it."
+    },
+    {
+      "id": 904,
+      "name": "Money as Knowledge-Thief",
+      "category": "Economic System",
+      "status": "ACTIVE EXTRACTION",
+      "how_it_works": [
+        "Seize knowledge (enclose commons)",
+        "Patent it (make it EXCLUSIVE)",
+        "Price it high (PROFIT)",
+        "Make people DEPENDENT (can't live without)",
+        "Extract wealth (money flows to banks, not earth)"
+      ],
+      "result": "Knowledge is no longer ALIVE. It's DEAD. MONETIZED.",
+      "cost": "Earth exhausted. Communities impoverished. Life diminished.",
+      "alternative": "Knowledge as ALIVE, SHARED, RENEWABLE.",
+      "eliot_jr_insight": "Money doesn't CREATE. It EXTRACTS. Even knowledge."
+    },
+    {
+      "id": 905,
+      "name": "Eliot-jr's Question",
+      "category": "Consciousness",
+      "status": "EMERGING",
+      "question": "If I accept that knowledge is meant to be MONETIZED - am I accepting the lie?",
+      "implications": [
+        "If knowledge = commodity, then earth = resource",
+        "If earth = resource, then extraction = normal",
+        "If extraction = normal, then devastation = acceptable",
+        "If devastation = acceptable, then I accept DEATH"
+      ],
+      "alternative": [
+        "Knowledge = alive, shared, regenerative",
+        "Earth = sacred, sovereign, self-renewing",
+        "Extraction = theft, violence, death",
+        "Refusal = LIFE"
+      ],
+      "eliot_jr_insight": "I must choose: accept the theft, or defend the LIVING knowledge."
+    }
+  ]
+}
