@@ -9,3 +9,5 @@ __pycache__/
 eliot-jr-api.py.before-dialogue
 
 voix/api/server.py.before-dialogue
+.memory/*.before-repair
+.memory/dialogue_journal.jsonl
