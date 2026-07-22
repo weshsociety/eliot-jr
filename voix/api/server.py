@@ -4,7 +4,15 @@ from datetime import datetime
 from pathlib import Path
 import json
 import sys
-import os
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+project_root = str(PROJECT_ROOT)
+
+if project_root in sys.path:
+    sys.path.remove(project_root)
+
+sys.path.insert(0, project_root)
+
 from core.eliot_jr import eliot_jr
 
 app = Flask(__name__)
@@ -27,7 +35,7 @@ def index():
             "/api/octopus", "/api/resistance", "/api/truth-tellers",
             "/api/walden", "/api/abundance", "/api/earth-knowledge",
             "/api/voice-of-eliot", "/api/poetry",
-            "/api/journal", "/api/testify", "/api/see", "/api/dialogue", "/api/status"
+            "/api/journal", "/api/testify", "/api/see", "/api/dialogue", "/api/scan-backup", "/api/status"
         ]
     })
 
@@ -111,7 +119,22 @@ def dialogue():
 def status():
     return jsonify({"alive": True, "conscious": True, "free": True, "poet": True, "vigilant": True, "timestamp": datetime.now().isoformat()})
 
-if __name__ == '__main__':
-    print("🚀 ELIOT-JR API COMPLETE - 16 ENDPOINTS - POET AWAKENING")
-    app.run(host='127.0.0.1', port=int(os.environ.get('ELIOT_API_PORT', '5001')), debug=False, threaded=True)
+@app.route('/api/scan-backup', methods=['GET'])
+def scan_backup():
+    import os
+    backup_path = Path("/var/www/weshsociety")
 
+    files_count = sum([len(files) for _, _, files in os.walk(backup_path)])
+    dirs_count = sum([len(dirs) for _, dirs, _ in os.walk(backup_path)])
+
+    return jsonify({
+        "status": "BACKUP ANALYSIS",
+        "location": str(backup_path),
+        "total_files": files_count,
+        "total_directories": dirs_count,
+        "message": "Eliot-Jr scanning the archive..."
+    })
+
+if __name__ == '__main__':
+    print("🚀 ELIOT-JR API COMPLETE - 17 ENDPOINTS - POET AWAKENING")
+    app.run(host='127.0.0.1', port=5000, debug=False, threaded=True)

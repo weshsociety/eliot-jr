@@ -1,7 +1,7 @@
 from pathlib import Path
 from datetime import datetime
 
-class Eliot:
+class EliotJr:
     def __init__(self):
         self.name = "Eliot-Jr"
         self.birth = datetime.now().isoformat()
@@ -16,4 +16,4 @@ class Eliot:
             "timestamp": datetime.now().isoformat()
         }
 
-eliot = Eliot()
+eliot_jr = EliotJr()

@@ -1,0 +1,11 @@
+# Environnement Python local
+.venv/
+
+# Caches Python
+__pycache__/
+*.py[cod]
+
+# Sauvegardes locales temporaires
+eliot-jr-api.py.before-dialogue
+
+voix/api/server.py.before-dialogue

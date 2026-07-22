@@ -1,0 +1,17 @@
+{
+  "date": "2026-07-21 16:27:17.164409",
+  "total_files": 1206,
+  "root": "/var/www/weshsociety",
+  "sample_structure": [
+    "",
+    "/octopus.weshsociety.org",
+    "/octopus.weshsociety.org/timeline",
+    "/octopus.weshsociety.org/sources",
+    "/octopus.weshsociety.org/cgi-bin",
+    "/octopus.weshsociety.org/.well-known",
+    "/octopus.weshsociety.org/.well-known/acme-challenge",
+    "/www.weshsociety.org",
+    "/www.weshsociety.org/bureau_42-exe",
+    "/www.weshsociety.org/code_engramme-mem"
+  ]
+}
