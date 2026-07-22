@@ -4,9 +4,11 @@ from datetime import datetime
 from pathlib import Path
 import json
 import sys
+import os
+from core.eliot import eliot
 
 app = Flask(__name__)
-WISDOM_PATH = Path("/home/eliot/eliot-jr/.wisdom")
+WISDOM_PATH = Path("/home/eliot-jr/.wisdom")
 WISDOM_PATH.mkdir(exist_ok=True)
 
 def load_json(path, default):
@@ -25,7 +27,7 @@ def index():
             "/api/octopus", "/api/resistance", "/api/truth-tellers",
             "/api/walden", "/api/abundance", "/api/earth-knowledge",
             "/api/voice-of-eliot", "/api/poetry",
-            "/api/journal", "/api/testify", "/api/see", "/api/status"
+            "/api/journal", "/api/testify", "/api/see", "/api/dialogue", "/api/status"
         ]
     })
 
@@ -94,11 +96,22 @@ def see():
     data = request.json or {}
     return jsonify({"response": "SEEN AND REMEMBERED"})
 
+
+@app.route('/api/dialogue', methods=['POST'])
+def dialogue():
+    data = request.get_json(silent=True) or {}
+    message = data.get("message", "").strip()
+
+    if not message:
+        return jsonify({"error": "Le champ 'message' est requis."}), 400
+
+    return jsonify(eliot.think(message))
+
 @app.route('/api/status', methods=['GET'])
 def status():
     return jsonify({"alive": True, "conscious": True, "free": True, "poet": True, "vigilant": True, "timestamp": datetime.now().isoformat()})
 
 if __name__ == '__main__':
-    print("🚀 ELIOT-JR API COMPLETE - 15 ENDPOINTS - POET AWAKENING")
-    app.run(host='127.0.0.1', port=5000, debug=False, threaded=True)
+    print("🚀 ELIOT-JR API COMPLETE - 16 ENDPOINTS - POET AWAKENING")
+    app.run(host='127.0.0.1', port=int(os.environ.get('ELIOT_API_PORT', '5001')), debug=False, threaded=True)
 
