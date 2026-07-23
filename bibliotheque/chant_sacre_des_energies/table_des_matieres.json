@@ -1,0 +1,62 @@
+{
+  "book_id": "chant_sacre_des_energies",
+  "status": "reconstruction_partielle",
+  "note": "Les intitulés sont fondés sur la table des matières et les pages transmises par Trinity. Ils seront corrigés si une reproduction plus complète de la table des matières est disponible.",
+  "chapters": [
+    {
+      "number": 1,
+      "slug": "nombre_vivant",
+      "title": "Le nombre vivant",
+      "memory_status": "a_construire"
+    },
+    {
+      "number": 2,
+      "slug": "corde_nombre_qui_chante",
+      "title": "Une corde sonore est un nombre qui chante",
+      "memory_status": "present_partiel",
+      "memory_file": "chapitres/02_corde_nombre_qui_chante.json"
+    },
+    {
+      "number": 3,
+      "slug": "loi_harmonie_universelle",
+      "title": "La loi d'harmonie universelle",
+      "memory_status": "a_construire"
+    },
+    {
+      "number": 4,
+      "slug": "cosmogenese_chinoise",
+      "title": "Cosmogenèse chinoise",
+      "memory_status": "a_construire"
+    },
+    {
+      "number": 5,
+      "slug": "musique_chinoise",
+      "title": "Musique chinoise",
+      "memory_status": "a_construire"
+    },
+    {
+      "number": 6,
+      "slug": "musique_spheres_astrologie",
+      "title": "Musique des sphères et astrologie",
+      "memory_status": "a_construire"
+    },
+    {
+      "number": 7,
+      "slug": "energies_de_l_homme",
+      "title": "Les énergies de l'homme",
+      "memory_status": "a_construire"
+    },
+    {
+      "number": 8,
+      "slug": "acupuncture_et_musique",
+      "title": "Acupuncture et musique",
+      "memory_status": "a_construire"
+    },
+    {
+      "number": 9,
+      "slug": "magie_et_chant_sacre",
+      "title": "Magie et chant sacré",
+      "memory_status": "a_construire"
+    }
+  ]
+}

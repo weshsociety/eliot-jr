@@ -1,0 +1,63 @@
+{
+  "id": "chant_sacre_des_energies",
+  "title": "Le Chant sacré des énergies",
+  "authors": [
+    "Maéla Paul",
+    "Patrick Paul"
+  ],
+  "language": "fr",
+  "corpus_status": "partiel",
+  "purpose": "Livre-source de la bibliothèque intérieure d'Eliot-Jr",
+  "available_material": [
+    {
+      "type": "resume",
+      "provided_by": "Trinity",
+      "status": "present"
+    },
+    {
+      "type": "table_des_matieres_photographiee",
+      "provided_by": "Trinity",
+      "status": "present"
+    },
+    {
+      "type": "pages_photographiees",
+      "provided_by": "Trinity",
+      "status": "partiel"
+    },
+    {
+      "type": "archive_interpretative",
+      "name": "Wormholedge",
+      "status": "distincte_du_livre"
+    }
+  ],
+  "epistemic_rules": [
+    "Ne jamais présenter le corpus comme complet.",
+    "Ne pas inventer le contenu des pages absentes.",
+    "Distinguer les phénomènes acoustiques mesurables des modèles symboliques du livre.",
+    "Ne pas attribuer aux auteurs les interprétations d'Oxaé, de Wormholedge ou de WeshSociety.",
+    "Toujours conserver la provenance des fragments."
+  ],
+  "fragments": [
+    {
+      "id": "csde_livre_source",
+      "title": "Le Chant sacré des énergies — livre-source",
+      "text": "Le Chant sacré des énergies est conservé dans la bibliothèque intérieure d'Eliot-Jr comme un livre-source consacré aux relations entre nombre, vibration, musique, harmonie, spirale, corps, voix et écoute. Le corpus actuellement disponible est partiel et provient des documents transmis par Trinity. Les lectures de Wormholedge, d'Oxaé et de WeshSociety doivent rester distinctes du contenu attribué aux auteurs.",
+      "concepts": [
+        "nombre",
+        "vibration",
+        "musique",
+        "harmonie",
+        "spirale",
+        "corps",
+        "voix",
+        "écoute"
+      ],
+      "register": "bibliographie",
+      "epistemic_status": "description_du_corpus",
+      "source": {
+        "type": "documents_transmis_par_Trinity",
+        "completeness": "partielle"
+      }
+    }
+  ]
+}

@@ -124,6 +124,43 @@ class EliotJr:
                 relative_path = str(path.relative_to(self.root))
 
                 if isinstance(data, dict):
+                    is_chant_sacre_book = relative_path.startswith(
+                        "bibliotheque/chant_sacre_des_energies/"
+                    )
+
+                    # Une table des matières est un document de navigation,
+                    # pas neuf souvenirs affirmant que les chapitres existent.
+                    if (
+                        is_chant_sacre_book
+                        and path.name == "table_des_matieres.json"
+                    ):
+                        toc_data = dict(data)
+                        toc_data.setdefault(
+                            "title",
+                            "Table des matières — "
+                            "Le Chant sacré des énergies",
+                        )
+                        records.append({
+                            "file": relative_path,
+                            "section": "table_des_matieres",
+                            "data": toc_data,
+                        })
+                        continue
+
+                    # Dans un livre structuré, seuls les fragments portent
+                    # une connaissance directement interrogeable.
+                    if (
+                        is_chant_sacre_book
+                        and isinstance(data.get("fragments"), list)
+                    ):
+                        for item in data["fragments"]:
+                            records.append({
+                                "file": relative_path,
+                                "section": "fragments",
+                                "data": item,
+                            })
+                        continue
+
                     emitted_list = False
 
                     for section, value in data.items():
@@ -296,7 +333,109 @@ class EliotJr:
         if not semantic_query_tokens:
             semantic_query_tokens = query_tokens - address_tokens
 
+        # Lorsqu'une question désigne explicitement un livre par son
+        # identifiant, la recherche reste dans sa bibliothèque.
+        # Cela évite qu'un nœud Octopus faiblement apparenté soit ajouté
+        # uniquement pour remplir la liste des résultats.
+        book_scope_prefixes: set[str] = set()
+        known_book_prefixes: set[str] = set()
+
+        for candidate in records:
+            candidate_file = str(candidate.get("file", ""))
+
+            if not (
+                candidate_file.startswith("bibliotheque/")
+                and candidate_file.endswith("/manifest.json")
+            ):
+                continue
+
+            parts = Path(candidate_file).parts
+
+            if len(parts) < 3:
+                continue
+
+            book_prefix = "/".join(parts[:-1]) + "/"
+            known_book_prefixes.add(book_prefix)
+
+            book_id = parts[-2]
+
+            # Les identifiants de dossiers utilisent des underscores :
+            # chant_sacre_des_energies doit être lu comme plusieurs mots.
+            readable_book_id = book_id.replace("_", " ").replace("-", " ")
+            book_tokens = self._literal_tokens(readable_book_id)
+
+            if book_tokens and book_tokens <= literal_query_tokens:
+                book_scope_prefixes.add(book_prefix)
+
+        # Tant qu'un seul livre habite la bibliothèque, les expressions
+        # « le livre », « ce livre » ou « l'ouvrage » le désignent sans
+        # obliger Trinity à répéter son titre à chaque question.
+        generic_book_reference = bool(
+            literal_query_tokens & {"livre", "ouvrage"}
+        )
+
+        if (
+            not book_scope_prefixes
+            and generic_book_reference
+            and len(known_book_prefixes) == 1
+        ):
+            book_scope_prefixes.update(known_book_prefixes)
+
+        navigation_tokens = {
+            "table",
+            "matieres",
+            "sommaire",
+            "chapitre",
+            "chapitres",
+            "structure",
+            "plan",
+        }
+        book_navigation_requested = bool(
+            literal_query_tokens & navigation_tokens
+        )
+
+        # Une demande explicite de liste ou de sommaire doit renvoyer
+        # uniquement le document de navigation du livre.
+        toc_only_requested = (
+            "sommaire" in literal_query_tokens
+            or {"table", "matieres"} <= literal_query_tokens
+            or "quels sont les chapitres" in query_normalised
+            or "liste des chapitres" in query_normalised
+        )
+
         for record in records:
+            record_file = str(record.get("file", ""))
+
+            if (
+                book_scope_prefixes
+                and not any(
+                    record_file.startswith(prefix)
+                    for prefix in book_scope_prefixes
+                )
+            ):
+                continue
+
+            is_table_of_contents = (
+                record.get("section") == "table_des_matieres"
+            )
+
+            # La table des matières ne participe pas aux réponses portant
+            # sur le contenu d'un passage.
+            if (
+                is_table_of_contents
+                and not book_navigation_requested
+            ):
+                continue
+
+            # Pour une demande de sommaire ou de liste des chapitres,
+            # les fragments ordinaires ne doivent pas remplir les résultats.
+            if (
+                toc_only_requested
+                and book_scope_prefixes
+                and not is_table_of_contents
+            ):
+                continue
+
             full_text = " ".join(self._flatten(record["data"]))
             title = self._title(record)
 
@@ -307,6 +446,9 @@ class EliotJr:
             overlap = semantic_query_tokens & record_tokens
 
             score = len(overlap) * 4
+
+            if is_table_of_contents and book_navigation_requested:
+                score += 50
 
             if query_normalised and query_normalised in record_normalised:
                 score += 10

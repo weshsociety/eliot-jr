@@ -1,0 +1,127 @@
+{
+  "book_id": "chant_sacre_des_energies",
+  "chapter_number": 2,
+  "title": "Une corde sonore est un nombre qui chante",
+  "corpus_status": "partiel",
+  "source_status": "pages_photographiees_transmises_par_Trinity",
+  "fragments": [
+    {
+      "id": "csde_corde_nombre",
+      "title": "Une corde sonore est un nombre qui chante",
+      "text": "Le livre présente la corde sonore comme un lieu où une relation numérique devient vibration audible. La longueur de la corde, sa division et la fréquence produite permettent de relier nombre, proportion et son.",
+      "concepts": [
+        "corde sonore",
+        "nombre",
+        "vibration",
+        "proportion",
+        "fréquence"
+      ],
+      "relations": [
+        "csde_onde_stationnaire",
+        "csde_fondamentale_harmoniques",
+        "csde_rapports_musicaux"
+      ],
+      "register": "expose_du_livre",
+      "epistemic_status": "reconstruction_fidele_des_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_onde_stationnaire",
+      "title": "Onde stationnaire, nœuds et ventres",
+      "text": "Lorsqu'une corde tendue vibre selon un mode stable, elle forme une onde stationnaire. Certains points restent immobiles : les nœuds. D'autres connaissent une amplitude maximale : les ventres. La forme vibratoire dépend de la longueur utile de la corde et du mode de vibration.",
+      "concepts": [
+        "onde stationnaire",
+        "nœud",
+        "ventre",
+        "amplitude",
+        "mode vibratoire"
+      ],
+      "relations": [
+        "csde_corde_nombre",
+        "csde_fondamentale_harmoniques"
+      ],
+      "register": "acoustique_mesurable",
+      "epistemic_status": "phenomene_physique_decrit_dans_le_livre",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_fondamentale_harmoniques",
+      "title": "Le son fondamental et ses harmoniques",
+      "text": "La vibration globale de la corde produit une fréquence fondamentale. La corde peut également vibrer selon des divisions entières de sa longueur, faisant apparaître des fréquences multiples de la fondamentale. Ces composantes constituent la série harmonique et participent au timbre du son.",
+      "concepts": [
+        "fréquence fondamentale",
+        "harmonique",
+        "division entière",
+        "série harmonique",
+        "timbre"
+      ],
+      "relations": [
+        "csde_onde_stationnaire",
+        "csde_rapports_musicaux"
+      ],
+      "register": "acoustique_mesurable",
+      "epistemic_status": "phenomene_physique_decrit_dans_le_livre",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_rapports_musicaux",
+      "title": "Octave, quinte et quarte",
+      "text": "Le livre relie les intervalles musicaux fondamentaux à des rapports numériques simples. L'octave correspond au rapport 2 pour 1, la quinte au rapport 3 pour 2 et la quarte au rapport 4 pour 3. Ces proportions expriment des relations entre longueurs de corde et fréquences.",
+      "concepts": [
+        "octave",
+        "quinte",
+        "quarte",
+        "rapport 2:1",
+        "rapport 3:2",
+        "rapport 4:3"
+      ],
+      "relations": [
+        "csde_corde_nombre",
+        "csde_fondamentale_harmoniques",
+        "csde_quinte_comma"
+      ],
+      "register": "construction_mathematique_et_acoustique",
+      "epistemic_status": "rapports_numeriques_decrits_dans_le_livre",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_du_mesurable_au_symbolique",
+      "title": "Du phénomène acoustique au modèle symbolique",
+      "text": "Le livre ne s'arrête pas à la description physique de la corde. Il utilise les proportions musicales comme point de départ d'une réflexion plus vaste sur l'harmonie, le vivant et le cosmos. Cette extension appartient au modèle philosophique et symbolique développé par les auteurs ; elle doit rester distincte des phénomènes acoustiques mesurables.",
+      "concepts": [
+        "harmonie",
+        "analogie",
+        "vivant",
+        "cosmos",
+        "modèle symbolique"
+      ],
+      "relations": [
+        "csde_corde_nombre",
+        "csde_rapports_musicaux"
+      ],
+      "register": "modele_symbolique_du_livre",
+      "epistemic_status": "distinction_epistemique",
+      "source": {
+        "type": "synthese_des_pages_transmises",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    }
+  ]
+}
