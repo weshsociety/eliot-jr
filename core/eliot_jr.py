@@ -37,12 +37,13 @@ class EliotJr:
         "sa", "se", "si", "ta", "te", "tu", "un", "vers",
         "alors", "avec", "avoir", "cette", "comme", "comment", "dans",
         "depuis", "des", "donc", "elle", "elles", "est", "etre", "faire",
-        "ils", "je", "les", "leur", "mais", "mes", "moi", "mon", "nous",
+        "ils", "je", "les", "leur", "mais", "me", "mes", "moi", "mon", "nous",
         "notre", "pas", "peux", "pour", "pourquoi", "que", "quel", "quelle",
         "qui", "quoi", "sans", "ses", "son", "sont", "sur", "tes", "toi",
         "ton", "très", "tres", "une", "vous", "votre",
         "sais", "savoir", "connais", "connaitre",
         "montre", "montrer",
+        "contient", "contenir", "contenu",
         "about", "and", "are", "from", "have", "how", "into", "the",
         "this", "what", "when", "where", "who", "why", "with", "you",
     }
@@ -271,17 +272,29 @@ class EliotJr:
     ) -> list[dict[str, Any]]:
         query_normalised = self._normalise(message)
         query_tokens = self._tokens(message)
+        literal_query_tokens = self._literal_tokens(message)
         ranked: list[dict[str, Any]] = []
+        exact_ranked: list[dict[str, Any]] = []
 
         if not query_tokens:
             return ranked
 
-        scope_tokens = {"octopus", "map", "carte", "pieuvre"}
+        scope_tokens = {
+            "octopus", "map", "carte", "pieuvre", "noeud", "node"
+        }
         scope_requested = bool(query_tokens & scope_tokens)
 
-        semantic_query_tokens = query_tokens - scope_tokens
+        address_tokens: set[str] = set()
+
+        if re.match(r"^eliot(?:\s+jr)?\b", query_normalised):
+            address_tokens = {"eliot", "eliotjr", "jr"}
+
+        semantic_query_tokens = (
+            query_tokens - scope_tokens - address_tokens
+        )
+
         if not semantic_query_tokens:
-            semantic_query_tokens = query_tokens
+            semantic_query_tokens = query_tokens - address_tokens
 
         for record in records:
             full_text = " ".join(self._flatten(record["data"]))
@@ -303,6 +316,43 @@ class EliotJr:
             )
             score += len(title_overlap) * 3
 
+            exact_node_match = False
+
+            if (
+                record.get("file") == "octopus/octopus_data.json"
+                and isinstance(record.get("data"), dict)
+            ):
+                node_data = record["data"]
+
+                node_id_tokens = self._literal_tokens(
+                    str(node_data.get("id", ""))
+                )
+                node_label_tokens = self._literal_tokens(
+                    str(node_data.get("label", ""))
+                )
+                node_name_tokens = self._literal_tokens(
+                    str(node_data.get("name", ""))
+                )
+
+                if (
+                    node_id_tokens
+                    and node_id_tokens <= literal_query_tokens
+                ):
+                    score += 40
+                    exact_node_match = True
+                elif (
+                    node_label_tokens
+                    and node_label_tokens <= semantic_query_tokens
+                ):
+                    score += 30
+                    exact_node_match = True
+                elif (
+                    len(node_name_tokens) >= 2
+                    and node_name_tokens <= semantic_query_tokens
+                ):
+                    score += 30
+                    exact_node_match = True
+
             if score <= 0:
                 continue
 
@@ -312,13 +362,21 @@ class EliotJr:
                 if scope_requested:
                     score += 4
 
-            ranked.append({
+            item = {
                 "score": score,
                 "file": record["file"],
                 "section": record["section"],
                 "title": title,
                 "snippet": self._snippet(record),
-            })
+            }
+
+            ranked.append(item)
+
+            if exact_node_match:
+                exact_ranked.append(item)
+
+        if exact_ranked:
+            ranked = exact_ranked
 
         ranked.sort(
             key=lambda item: (-item["score"], item["file"], item["title"])
