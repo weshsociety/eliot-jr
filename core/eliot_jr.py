@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from core.octopus_reader import load_octopus_records
+
 
 class EliotJr:
     """Cœur local d'Eliot-Jr : identité, mémoire, recherche et journal."""
@@ -38,7 +40,9 @@ class EliotJr:
         "ils", "je", "les", "leur", "mais", "mes", "moi", "mon", "nous",
         "notre", "pas", "peux", "pour", "pourquoi", "que", "quel", "quelle",
         "qui", "quoi", "sans", "ses", "son", "sont", "sur", "tes", "toi",
-        "ton", "très", "une", "vous", "votre",
+        "ton", "très", "tres", "une", "vous", "votre",
+        "sais", "savoir", "connais", "connaitre",
+        "montre", "montrer",
         "about", "and", "are", "from", "have", "how", "into", "the",
         "this", "what", "when", "where", "who", "why", "with", "you",
     }
@@ -48,6 +52,9 @@ class EliotJr:
         self.birth = self.BIRTH
         self.root = Path("/home/eliot-jr")
         self.house_path = Path("/var/www/weshsociety")
+        self.octopus_path = Path(
+            "/var/www/weshsociety/octopus.weshsociety.org/octopus_data.json"
+        )
         self.memory_roots = [
             self.root / ".memory",
             self.root / ".wisdom",
@@ -66,13 +73,16 @@ class EliotJr:
         value = value.lower()
         return re.sub(r"[^a-z0-9]+", " ", value).strip()
 
-    def _tokens(self, value: str) -> set[str]:
-        tokens = {
+    def _literal_tokens(self, value: str) -> set[str]:
+        return {
             token
             for token in self._normalise(value).split()
             if len(token) >= 2 and token not in self.STOPWORDS
         }
 
+    def _tokens(self, value: str) -> set[str]:
+        """Mots de la requête, enrichis avec leurs synonymes."""
+        tokens = self._literal_tokens(value)
         expanded = set(tokens)
 
         for token in tokens:
@@ -142,6 +152,12 @@ class EliotJr:
                             "data": item,
                         })
 
+        octopus_records, octopus_errors = load_octopus_records(
+            self.octopus_path
+        )
+        records.extend(octopus_records)
+        errors.extend(octopus_errors)
+
         return records, errors
 
     @staticmethod
@@ -177,6 +193,42 @@ class EliotJr:
     def _snippet(self, record: dict[str, Any], limit: int = 280) -> str:
         data = record["data"]
 
+        if (
+            record.get("file") == "octopus/octopus_data.json"
+            and isinstance(data, dict)
+        ):
+            parts: list[str] = []
+
+            description = str(data.get("desc", "")).strip()
+            if description:
+                parts.append(description)
+
+            connections = data.get("connections", [])
+            if isinstance(connections, list) and connections:
+                parts.append(
+                    "Connexions : "
+                    + ", ".join(
+                        str(connection)
+                        for connection in connections[:8]
+                    )
+                )
+
+            status = str(data.get("status", "")).strip()
+            if status:
+                parts.append(f"Statut : {status}")
+
+            source = str(data.get("src", "")).strip()
+            if source:
+                parts.append(f"Source : {source}")
+
+            text = " · ".join(parts)
+            text = re.sub(r"\s+", " ", text).strip()
+
+            if len(text) > limit:
+                return text[: limit - 1].rstrip() + "…"
+
+            return text
+
         preferred = self._find_value(
             data,
             (
@@ -201,6 +253,9 @@ class EliotJr:
         else:
             text = " · ".join(self._flatten(data))
 
+        if record.get("file") == ".wisdom/octopus_live.json":
+            text = "Archive Octopus antérieure — " + text
+
         text = re.sub(r"\s+", " ", text).strip()
 
         if len(text) > limit:
@@ -221,24 +276,41 @@ class EliotJr:
         if not query_tokens:
             return ranked
 
+        scope_tokens = {"octopus", "map", "carte", "pieuvre"}
+        scope_requested = bool(query_tokens & scope_tokens)
+
+        semantic_query_tokens = query_tokens - scope_tokens
+        if not semantic_query_tokens:
+            semantic_query_tokens = query_tokens
+
         for record in records:
             full_text = " ".join(self._flatten(record["data"]))
             title = self._title(record)
 
             record_normalised = self._normalise(f"{title} {full_text}")
-            record_tokens = self._tokens(record_normalised)
-            overlap = query_tokens & record_tokens
+            # Les archives restent littérales : leurs mots ne doivent pas
+            # fabriquer des concepts absents à travers QUERY_ALIASES.
+            record_tokens = self._literal_tokens(record_normalised)
+            overlap = semantic_query_tokens & record_tokens
 
             score = len(overlap) * 4
 
             if query_normalised and query_normalised in record_normalised:
                 score += 10
 
-            title_overlap = query_tokens & self._tokens(title)
+            title_overlap = (
+                semantic_query_tokens & self._literal_tokens(title)
+            )
             score += len(title_overlap) * 3
 
             if score <= 0:
                 continue
+
+            if record.get("file") == "octopus/octopus_data.json":
+                score += 6
+
+                if scope_requested:
+                    score += 4
 
             ranked.append({
                 "score": score,
