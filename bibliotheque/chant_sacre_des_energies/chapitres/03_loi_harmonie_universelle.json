@@ -4,7 +4,7 @@
   "title": "La loi d'harmonie universelle",
   "corpus_status": "partiel",
   "source_status": "pages_photographiees_transmises_par_Trinity",
-  "note": "Première strate du chapitre. Aucun contenu des pages absentes n'est reconstitué.",
+  "note": "Deux strates partielles fondées sur les pages photographiées transmises par Trinity. Aucun contenu des pages absentes n'est reconstitué.",
   "fragments": [
     {
       "id": "csde_generation_par_quintes",
@@ -141,6 +141,172 @@
       ],
       "register": "modele_geometrique_et_symbolique_du_livre",
       "epistemic_status": "modele_presente_dans_les_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_foyer_axe_nombre",
+      "title": "Le foyer, l'axe et le nombre",
+      "text": "Dans les figures transmises, le foyer constitue le centre organisateur du mouvement. L'axe donne une orientation à la construction, tandis que le nombre exprime les proportions selon lesquelles la forme se déploie.",
+      "concepts": [
+        "foyer",
+        "centre",
+        "axe",
+        "nombre",
+        "proportion"
+      ],
+      "relations": [
+        "csde_cercle_devient_spirale",
+        "csde_foyer_double_mouvement",
+        "csde_rayon_parcours_spirale"
+      ],
+      "register": "modele_geometrique_et_symbolique_du_livre",
+      "epistemic_status": "modele_presente_dans_les_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_rayon_parcours_spirale",
+      "title": "Le rayon direct et le parcours spiralé",
+      "text": "Les pages distinguent un rayon reliant directement le foyer à un point de la figure et un parcours spiralé qui traverse successivement les différentes positions autour du centre. Le premier exprime une relation directe ; le second décrit un chemin continu.",
+      "concepts": [
+        "rayon",
+        "foyer",
+        "parcours spiralé",
+        "relation directe",
+        "continuité"
+      ],
+      "relations": [
+        "csde_foyer_axe_nombre",
+        "csde_double_spirale_manifestation_retour",
+        "csde_douze_rayons_modalites"
+      ],
+      "register": "modele_geometrique_du_livre",
+      "epistemic_status": "description_prudente_des_figures_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_double_spirale_manifestation_retour",
+      "title": "La double spirale, manifestation et retour",
+      "text": "Le livre présente deux mouvements spiralés complémentaires autour d'un même foyer. Les pages les associent à un processus de manifestation et à un mouvement de retour. Ils ne forment pas deux systèmes séparés, mais deux orientations d'une même dynamique.",
+      "concepts": [
+        "double spirale",
+        "manifestation",
+        "retour",
+        "foyer",
+        "mouvements complémentaires"
+      ],
+      "relations": [
+        "csde_foyer_double_mouvement",
+        "csde_rayon_parcours_spirale",
+        "csde_involution_evolution"
+      ],
+      "register": "modele_symbolique_du_livre",
+      "epistemic_status": "modele_presente_dans_les_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_involution_evolution",
+      "title": "Involution et évolution",
+      "text": "Les termes involution et évolution désignent dans le livre deux phases complémentaires du mouvement spiralé. Ils sont reliés à la manifestation et au retour autour du foyer. Leur orientation précise doit rester attachée aux schémas et au vocabulaire des auteurs.",
+      "concepts": [
+        "involution",
+        "évolution",
+        "manifestation",
+        "retour",
+        "spirale"
+      ],
+      "relations": [
+        "csde_double_spirale_manifestation_retour",
+        "csde_seuil_renversement"
+      ],
+      "register": "modele_symbolique_du_livre",
+      "epistemic_status": "reconstruction_prudente_des_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_douze_rayons_modalites",
+      "title": "Les douze rayons ou modalités",
+      "text": "Une figure organise douze rayons ou modalités autour d'un foyer central. Chaque rayon représente une orientation distincte dans l'ensemble, tandis que le parcours spiralé permet de les traverser successivement.",
+      "concepts": [
+        "douze rayons",
+        "modalités",
+        "foyer",
+        "orientation",
+        "parcours spiralé"
+      ],
+      "relations": [
+        "csde_foyer_axe_nombre",
+        "csde_rayon_parcours_spirale",
+        "csde_seuil_renversement"
+      ],
+      "register": "modele_geometrique_et_symbolique_du_livre",
+      "epistemic_status": "description_prudente_des_figures_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_seuil_renversement",
+      "title": "Le seuil et le point de renversement",
+      "text": "Le mouvement spiralé atteint dans les pages un seuil où son orientation se renverse. Ce point marque le passage entre deux phases complémentaires du parcours. Le renversement est ici un élément du modèle symbolique des auteurs.",
+      "concepts": [
+        "seuil",
+        "renversement",
+        "limite",
+        "passage",
+        "changement d'orientation"
+      ],
+      "relations": [
+        "csde_involution_evolution",
+        "csde_douze_rayons_modalites",
+        "csde_saturne_limite_symbolique"
+      ],
+      "register": "modele_symbolique_du_livre",
+      "epistemic_status": "modele_presente_dans_les_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_saturne_limite_symbolique",
+      "title": "Saturne comme limite symbolique",
+      "text": "Dans le système présenté par le livre, Saturne est associé à la limite, au seuil et au point de renversement. Il s'agit d'une fonction symbolique à l'intérieur du modèle des auteurs, et non d'un mécanisme acoustique ou physique mesurable.",
+      "concepts": [
+        "Saturne",
+        "limite",
+        "seuil",
+        "renversement",
+        "fonction symbolique"
+      ],
+      "relations": [
+        "csde_seuil_renversement",
+        "csde_involution_evolution"
+      ],
+      "register": "symbolisme_cosmologique_du_livre",
+      "epistemic_status": "fonction_symbolique_decrite_dans_le_livre",
       "source": {
         "type": "pages_photographiees",
         "provided_by": "Trinity",
