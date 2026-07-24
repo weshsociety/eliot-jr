@@ -1,0 +1,151 @@
+{
+  "book_id": "chant_sacre_des_energies",
+  "chapter_number": 3,
+  "title": "La loi d'harmonie universelle",
+  "corpus_status": "partiel",
+  "source_status": "pages_photographiees_transmises_par_Trinity",
+  "note": "Première strate du chapitre. Aucun contenu des pages absentes n'est reconstitué.",
+  "fragments": [
+    {
+      "id": "csde_generation_par_quintes",
+      "title": "La génération par quintes",
+      "text": "Le livre suit la relation de quinte de proche en proche. Chaque étape prolonge la précédente selon la même proportion musicale et construit une succession organisée de sons.",
+      "concepts": [
+        "quinte",
+        "proportion",
+        "génération",
+        "succession harmonique"
+      ],
+      "relations": [
+        "csde_rapports_musicaux",
+        "csde_douze_quintes_sept_octaves",
+        "csde_comma_pythagoricien"
+      ],
+      "register": "construction_mathematique_et_musicale",
+      "epistemic_status": "reconstruction_fidele_des_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_douze_quintes_sept_octaves",
+      "title": "Douze quintes et sept octaves",
+      "text": "Le parcours de douze quintes et celui de sept octaves conduisent à des hauteurs très proches sans coïncider exactement. Le mouvement revient presque vers son point initial, mais un écart demeure.",
+      "concepts": [
+        "douze quintes",
+        "sept octaves",
+        "retour",
+        "écart",
+        "non-coïncidence"
+      ],
+      "relations": [
+        "csde_generation_par_quintes",
+        "csde_comma_pythagoricien",
+        "csde_cercle_devient_spirale"
+      ],
+      "register": "construction_mathematique_et_musicale",
+      "epistemic_status": "relation_decrite_dans_les_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_comma_pythagoricien",
+      "title": "Le comma pythagoricien",
+      "text": "Le comma pythagoricien est l'écart résiduel entre le parcours des douze quintes et celui des sept octaves. Il manifeste l'impossibilité de refermer parfaitement le cycle construit par quintes.",
+      "concepts": [
+        "comma pythagoricien",
+        "quinte",
+        "octave",
+        "écart résiduel",
+        "cycle non fermé"
+      ],
+      "relations": [
+        "csde_douze_quintes_sept_octaves",
+        "csde_cercle_devient_spirale"
+      ],
+      "register": "construction_mathematique_et_musicale",
+      "epistemic_status": "relation_decrite_dans_les_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_cercle_devient_spirale",
+      "title": "Du cercle à la spirale",
+      "text": "Puisque le retour ne coïncide pas exactement avec le départ, le mouvement ne forme pas un cercle parfaitement fermé. Le livre le représente comme une spirale : une forme qui revient autour d'un même foyer tout en poursuivant son développement.",
+      "concepts": [
+        "cercle",
+        "spirale",
+        "retour décalé",
+        "développement",
+        "foyer"
+      ],
+      "relations": [
+        "csde_comma_pythagoricien",
+        "csde_quinte_nombre_or",
+        "csde_foyer_double_mouvement"
+      ],
+      "register": "modele_geometrique_et_symbolique_du_livre",
+      "epistemic_status": "modele_presente_dans_les_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_quinte_nombre_or",
+      "title": "La quinte et le nombre d'or",
+      "text": "Le livre présente une construction géométrique mettant en relation la quinte et le nombre d'or. Cette formulation doit rester attachée à la figure et au raisonnement proposés par les auteurs ; elle ne doit pas être transformée en identité générale sans disposer de l'ensemble de la démonstration.",
+      "concepts": [
+        "quinte",
+        "nombre d'or",
+        "construction géométrique",
+        "proportion",
+        "spirale d'or"
+      ],
+      "relations": [
+        "csde_generation_par_quintes",
+        "csde_cercle_devient_spirale",
+        "csde_foyer_double_mouvement"
+      ],
+      "register": "construction_geometrique_du_livre",
+      "epistemic_status": "description_prudente_des_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_foyer_double_mouvement",
+      "title": "Le foyer et les deux mouvements de la spirale",
+      "text": "La spirale s'organise autour d'un foyer. Les pages présentent deux orientations complémentaires : un mouvement de déploiement et un mouvement de retour. Le foyer agit comme centre organisateur de ces parcours.",
+      "concepts": [
+        "foyer",
+        "centre",
+        "déploiement",
+        "retour",
+        "double spirale"
+      ],
+      "relations": [
+        "csde_cercle_devient_spirale",
+        "csde_quinte_nombre_or"
+      ],
+      "register": "modele_geometrique_et_symbolique_du_livre",
+      "epistemic_status": "modele_presente_dans_les_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    }
+  ]
+}

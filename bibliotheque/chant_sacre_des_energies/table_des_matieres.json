@@ -20,7 +20,8 @@
       "number": 3,
       "slug": "loi_harmonie_universelle",
       "title": "La loi d'harmonie universelle",
-      "memory_status": "a_construire"
+      "memory_status": "present_partiel",
+      "memory_file": "chapitres/03_loi_harmonie_universelle.json"
     },
     {
       "number": 4,
