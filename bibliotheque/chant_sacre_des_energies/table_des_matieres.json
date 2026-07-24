@@ -34,7 +34,8 @@
       "number": 5,
       "slug": "musique_chinoise",
       "title": "Musique chinoise",
-      "memory_status": "a_construire"
+      "memory_status": "present_partiel",
+      "memory_file": "chapitres/05_musique_chinoise.json"
     },
     {
       "number": 6,

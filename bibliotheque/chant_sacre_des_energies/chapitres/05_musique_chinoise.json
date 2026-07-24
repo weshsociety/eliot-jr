@@ -1,0 +1,203 @@
+{
+  "book_id": "chant_sacre_des_energies",
+  "chapter_number": 5,
+  "title": "Musique chinoise",
+  "corpus_status": "partiel",
+  "source_status": "texte_transmis_par_Trinity",
+  "note": "Première strate fondée uniquement sur le texte disponible. Les douze lius ne sont pas encore décrits, faute de source lisible suffisamment détaillée.",
+  "fragments": [
+    {
+      "id": "csde_trois_musiques_chinoises",
+      "title": "Les trois musiques : Terre, Homme et Ciel",
+      "text": "Selon la tradition chinoise telle qu'elle est exposée dans le livre, trois musiques s'élèvent de l'océan sonore : la Musique de la Terre, la Musique de l'Homme et la Musique du Ciel. Elles correspondent à trois niveaux distincts mais reliés de l'expérience sonore.",
+      "concepts": [
+        "Musique de la Terre",
+        "Musique de l'Homme",
+        "Musique du Ciel",
+        "tradition chinoise",
+        "océan sonore"
+      ],
+      "relations": [
+        "csde_musique_terre",
+        "csde_musique_homme",
+        "csde_musique_ciel"
+      ],
+      "register": "modele_traditionnel_decrit_dans_le_livre",
+      "epistemic_status": "expose_fidele_du_texte_disponible",
+      "source": {
+        "type": "texte_transmis",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_musique_terre",
+      "title": "La Musique de la Terre",
+      "text": "Le livre associe la Musique de la Terre aux bruits et aux sons de la nature, tels que le vent, les vagues et les éclairs. Il indique également que la Terre possède sa propre tonique.",
+      "concepts": [
+        "Terre",
+        "sons de la nature",
+        "vent",
+        "vagues",
+        "éclairs",
+        "tonique"
+      ],
+      "relations": [
+        "csde_trois_musiques_chinoises",
+        "csde_huit_souffles"
+      ],
+      "register": "modele_traditionnel_decrit_dans_le_livre",
+      "epistemic_status": "expose_fidele_du_texte_disponible",
+      "source": {
+        "type": "texte_transmis",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_musique_homme",
+      "title": "La Musique de l'Homme",
+      "text": "La Musique de l'Homme comprend dans le livre les sons produits par la voix ou par les instruments. Elle forme un niveau intermédiaire entre les manifestations sonores de la Terre et la Musique intérieure du Ciel.",
+      "concepts": [
+        "Homme",
+        "voix",
+        "instruments",
+        "sons vocaux",
+        "sons instrumentaux"
+      ],
+      "relations": [
+        "csde_trois_musiques_chinoises",
+        "csde_huit_souffles",
+        "csde_musique_ciel"
+      ],
+      "register": "modele_traditionnel_decrit_dans_le_livre",
+      "epistemic_status": "reconstruction_prudente_du_texte_disponible",
+      "source": {
+        "type": "texte_transmis",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_huit_souffles",
+      "title": "Les huit souffles et les huit matériaux",
+      "text": "Le livre subordonne les Musiques de la Terre et de l'Homme aux huit souffles, nommés aussi Huit Vents de la Rose des Vents. Il relie cette organisation à l'emploi traditionnel de huit matériaux différents dans la fabrication des instruments.",
+      "concepts": [
+        "huit souffles",
+        "Huit Vents",
+        "Rose des Vents",
+        "huit matériaux",
+        "instruments"
+      ],
+      "relations": [
+        "csde_musique_terre",
+        "csde_musique_homme",
+        "csde_trois_musiques_chinoises"
+      ],
+      "register": "correspondance_traditionnelle_decrite_dans_le_livre",
+      "epistemic_status": "expose_fidele_du_texte_disponible",
+      "source": {
+        "type": "texte_transmis",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_musique_ciel",
+      "title": "La Musique du Ciel",
+      "text": "Le livre présente la Musique du Ciel comme la Vie qui s'écoule et comme le mouvement des énergies en l'être humain. Elle s'adresse au monde intérieur et à l'être verticalisé.",
+      "concepts": [
+        "Ciel",
+        "Vie",
+        "mouvement des énergies",
+        "monde intérieur",
+        "verticalité"
+      ],
+      "relations": [
+        "csde_trois_musiques_chinoises",
+        "csde_musique_homme",
+        "csde_musique_ciel_silence"
+      ],
+      "register": "modele_spirituel_du_livre",
+      "epistemic_status": "modele_traditionnel_decrit_dans_le_texte",
+      "source": {
+        "type": "texte_transmis",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_musique_ciel_silence",
+      "title": "La Musique du Ciel conduit au Silence",
+      "text": "Dans le modèle du livre, la Musique du Ciel introduit au Silence. Celui-ci est présenté non comme une simple absence de bruit, mais comme une vacuité existentielle associée à la plénitude de l'être essentiel, origine et fin de toute chose.",
+      "concepts": [
+        "Silence",
+        "vacuité",
+        "plénitude",
+        "origine",
+        "fin",
+        "Eternel Présent"
+      ],
+      "relations": [
+        "csde_musique_ciel",
+        "csde_trois_musiques_chinoises"
+      ],
+      "register": "modele_spirituel_et_symbolique_du_livre",
+      "epistemic_status": "expose_fidele_du_texte_disponible",
+      "source": {
+        "type": "texte_transmis",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_musique_rites",
+      "title": "La Musique et les Rites",
+      "text": "Le livre présente la Musique et les Rites comme complémentaires. Les Rites distinguent, hiérarchisent et structurent l'extérieur, tandis que la Musique communique, réunit, harmonise et modifie l'intérieur de l'être humain.",
+      "concepts": [
+        "Musique",
+        "Rites",
+        "Ciel",
+        "Terre",
+        "harmonie",
+        "intérieur",
+        "extérieur"
+      ],
+      "relations": [
+        "csde_trois_musiques_chinoises",
+        "csde_musique_temps"
+      ],
+      "register": "modele_traditionnel_et_symbolique_du_livre",
+      "epistemic_status": "expose_fidele_du_texte_disponible",
+      "source": {
+        "type": "texte_transmis",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_musique_temps",
+      "title": "Musique, temps, heures et saisons",
+      "text": "Le livre relie traditionnellement la musique aux mouvements énergétiques de la journée et des saisons. Il évoque le choix d'une tonique ou d'un mode selon les heures, les moments et les fêtes de l'année.",
+      "concepts": [
+        "temps",
+        "heures",
+        "saisons",
+        "tonique",
+        "mode",
+        "fêtes"
+      ],
+      "relations": [
+        "csde_musique_rites",
+        "csde_trois_musiques_chinoises"
+      ],
+      "register": "correspondance_traditionnelle_decrite_dans_le_livre",
+      "epistemic_status": "expose_fidele_du_texte_disponible",
+      "source": {
+        "type": "texte_transmis",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    }
+  ]
+}
