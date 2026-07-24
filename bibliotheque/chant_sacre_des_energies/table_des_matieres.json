@@ -27,7 +27,8 @@
       "number": 4,
       "slug": "cosmogenese_chinoise",
       "title": "Cosmogenèse chinoise",
-      "memory_status": "a_construire"
+      "memory_status": "present_partiel",
+      "memory_file": "chapitres/04_cosmogenese_chinoise.json"
     },
     {
       "number": 5,

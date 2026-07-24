@@ -1,0 +1,153 @@
+{
+  "book_id": "chant_sacre_des_energies",
+  "chapter_number": 4,
+  "title": "Cosmogenèse chinoise",
+  "corpus_status": "partiel",
+  "source_status": "pages_photographiees_transmises_par_Trinity",
+  "note": "Première strate fondée uniquement sur les pages disponibles. Les correspondances absentes ou illisibles ne sont pas reconstituées.",
+  "fragments": [
+    {
+      "id": "csde_yin_yang_polarites",
+      "title": "Yin et Yang comme polarités complémentaires",
+      "text": "Dans le modèle présenté par le livre, Yin et Yang constituent deux polarités complémentaires. Elles ne sont pas décrites comme deux réalités isolées, mais comme deux orientations interdépendantes d'un même processus.",
+      "concepts": [
+        "Yin",
+        "Yang",
+        "polarité",
+        "complémentarité",
+        "processus"
+      ],
+      "relations": [
+        "csde_plan_central",
+        "csde_quintessence_centre",
+        "csde_cinq_mouvements"
+      ],
+      "register": "modele_cosmologique_du_livre",
+      "epistemic_status": "modele_presente_dans_les_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_plan_central",
+      "title": "Le plan central entre Yin et Yang",
+      "text": "Les figures disponibles présentent un plan central associé à l'organisation des deux polarités Yin et Yang. Ce plan agit comme une zone de relation, d'équilibre ou de passage entre leurs orientations.",
+      "concepts": [
+        "plan central",
+        "Yin",
+        "Yang",
+        "équilibre",
+        "passage"
+      ],
+      "relations": [
+        "csde_yin_yang_polarites",
+        "csde_quintessence_centre",
+        "csde_centre_et_deploiement"
+      ],
+      "register": "modele_geometrique_et_cosmologique_du_livre",
+      "epistemic_status": "description_prudente_des_figures_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_quintessence_centre",
+      "title": "La quintessence au centre",
+      "text": "Le livre place la quintessence dans une position centrale par rapport aux polarités et aux mouvements. Elle apparaît comme un principe organisateur du système. Sa signification précise doit rester attachée au vocabulaire et aux schémas des auteurs.",
+      "concepts": [
+        "quintessence",
+        "centre",
+        "principe organisateur",
+        "Yin",
+        "Yang"
+      ],
+      "relations": [
+        "csde_plan_central",
+        "csde_cinq_mouvements",
+        "csde_centre_et_deploiement"
+      ],
+      "register": "modele_symbolique_et_cosmologique_du_livre",
+      "epistemic_status": "reconstruction_prudente_des_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_cinq_mouvements",
+      "title": "Les cinq mouvements",
+      "text": "Le système présenté dans les pages organise cinq mouvements autour d'un principe central. Ils constituent des modalités différenciées d'un même ensemble plutôt que cinq éléments indépendants.",
+      "concepts": [
+        "cinq mouvements",
+        "modalités",
+        "centre",
+        "organisation",
+        "ensemble"
+      ],
+      "relations": [
+        "csde_yin_yang_polarites",
+        "csde_quintessence_centre",
+        "csde_circulation_cinq_mouvements"
+      ],
+      "register": "modele_cosmologique_du_livre",
+      "epistemic_status": "modele_presente_dans_les_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_circulation_cinq_mouvements",
+      "title": "La circulation entre les cinq mouvements",
+      "text": "Les cinq mouvements sont reliés dans une organisation dynamique. Le livre les présente comme des phases ou orientations qui se répondent et circulent dans le système, plutôt que comme une classification immobile.",
+      "concepts": [
+        "circulation",
+        "cinq mouvements",
+        "phases",
+        "relations",
+        "dynamique"
+      ],
+      "relations": [
+        "csde_cinq_mouvements",
+        "csde_centre_et_deploiement"
+      ],
+      "register": "modele_symbolique_du_livre",
+      "epistemic_status": "description_prudente_des_pages_disponibles",
+      "source": {
+        "type": "pages_photographiees",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    },
+    {
+      "id": "csde_centre_et_deploiement",
+      "title": "Du centre au déploiement des formes",
+      "text": "La cosmogenèse exposée dans les pages part d'une organisation centrale et se déploie en polarités puis en mouvements différenciés. Cette lecture appartient au modèle cosmologique et symbolique des auteurs ; elle ne constitue pas une description physique mesurable de la formation de l'univers.",
+      "concepts": [
+        "centre",
+        "déploiement",
+        "polarités",
+        "mouvements",
+        "cosmogenèse"
+      ],
+      "relations": [
+        "csde_plan_central",
+        "csde_quintessence_centre",
+        "csde_circulation_cinq_mouvements"
+      ],
+      "register": "modele_cosmologique_du_livre",
+      "epistemic_status": "distinction_epistemique",
+      "source": {
+        "type": "synthese_des_pages_transmises",
+        "provided_by": "Trinity",
+        "page_numbers": "non_confirmes"
+      }
+    }
+  ]
+}
