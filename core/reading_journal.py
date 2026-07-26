@@ -441,3 +441,231 @@ def open_reading_with_baseline(
     }
 
     return updated, report
+
+
+def prepare_reading_queue(
+    journals_root: Path,
+    journal_id: str,
+    manifest: dict[str, Any],
+    prepared_by: str = "eliot_jr",
+    now: datetime | None = None,
+    commit: bool = True,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """
+    Prépare les passages d'une source dans leur ordre de lecture.
+
+    Un passage placé dans cette file n'est pas encore considéré comme lu,
+    compris ou interprété. Il est seulement disponible pour une future
+    rencontre avec un moteur d'inférence identifié.
+    """
+    path = _journal_path(journals_root, journal_id)
+    timestamp = _utc_now(now)
+
+    if not isinstance(manifest, dict):
+        raise ReadingJournalError(
+            "Le manifeste de lecture est invalide."
+        )
+
+    source_hash = str(
+        manifest.get("source_sha256", "")
+    ).strip()
+    passages = manifest.get("passages", [])
+
+    if not source_hash:
+        raise ReadingJournalError(
+            "Le manifeste ne contient pas de SHA-256 de source."
+        )
+
+    if not isinstance(passages, list) or not passages:
+        raise ReadingJournalError(
+            "Le manifeste ne contient aucun passage."
+        )
+
+    queue: list[dict[str, Any]] = []
+    seen_passage_ids: set[str] = set()
+
+    for expected_order, passage in enumerate(passages, 1):
+        if not isinstance(passage, dict):
+            raise ReadingJournalError(
+                f"Le passage {expected_order} est invalide."
+            )
+
+        passage_id = str(
+            passage.get("passage_id", "")
+        ).strip()
+        passage_hash = str(
+            passage.get("sha256", "")
+        ).strip()
+        order = passage.get("order")
+
+        if not passage_id or not passage_hash:
+            raise ReadingJournalError(
+                f"Le passage {expected_order} est incomplet."
+            )
+
+        if passage_id in seen_passage_ids:
+            raise ReadingJournalError(
+                f"Identifiant de passage dupliqué : {passage_id}"
+            )
+
+        if order != expected_order:
+            raise ReadingJournalError(
+                "L'ordre des passages du manifeste est incohérent."
+            )
+
+        seen_passage_ids.add(passage_id)
+
+        queue.append({
+            "passage_id": passage_id,
+            "order": order,
+            "passage_sha256": passage_hash,
+            "word_count": int(
+                passage.get("word_count", 0)
+            ),
+            "character_count": int(
+                passage.get("character_count", 0)
+            ),
+            "status": "queued",
+            "queued_at_utc": timestamp,
+            "exposed_at_utc": None,
+            "inference_engine": None,
+            "reflection_status": "not_produced",
+        })
+
+    lock_path = path.with_suffix(path.suffix + ".lock")
+
+    with lock_path.open("a+", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+
+        journal = _read_json(path)
+        work = journal.get("work", {})
+        before = journal.get("before_reading", {})
+
+        if not isinstance(work, dict):
+            raise ReadingJournalError(
+                "La section work du journal est invalide."
+            )
+
+        if not isinstance(before, dict):
+            raise ReadingJournalError(
+                "La section before_reading est invalide."
+            )
+
+        if work.get("source_sha256") != source_hash:
+            raise ReadingJournalError(
+                "Le manifeste ne correspond pas à la source "
+                "enregistrée dans le journal."
+            )
+
+        if before.get("status") != "recorded":
+            raise ReadingJournalError(
+                "L'état avant lecture doit être enregistré "
+                "avant de préparer la file."
+            )
+
+        previous_plan = journal.get("reading_plan")
+        previous_queue = journal.get("reading_queue", [])
+
+        same_plan = (
+            isinstance(previous_plan, dict)
+            and previous_plan.get("source_sha256") == source_hash
+            and isinstance(previous_queue, list)
+            and [
+                item.get("passage_sha256")
+                for item in previous_queue
+                if isinstance(item, dict)
+            ] == [
+                item["passage_sha256"]
+                for item in queue
+            ]
+        )
+
+        if same_plan:
+            report = {
+                "journal_id": journal_id,
+                "source_sha256": source_hash,
+                "passage_count": len(queue),
+                "queued_passages": sum(
+                    1
+                    for item in previous_queue
+                    if (
+                        isinstance(item, dict)
+                        and item.get("status") == "queued"
+                    )
+                ),
+                "already_prepared": True,
+                "committed": False,
+            }
+
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+            return journal, report
+
+        updated = dict(journal)
+
+        if isinstance(previous_plan, dict):
+            superseded = journal.get(
+                "superseded_reading_plans",
+                [],
+            )
+
+            if not isinstance(superseded, list):
+                superseded = []
+
+            updated["superseded_reading_plans"] = [
+                *superseded,
+                {
+                    "superseded_at_utc": timestamp,
+                    "reading_plan": previous_plan,
+                    "reading_queue": previous_queue,
+                },
+            ]
+
+        updated["reading_plan"] = {
+            "version": 1,
+            "mode": "sequential",
+            "source_sha256": source_hash,
+            "source_file": manifest.get("source_file"),
+            "prepared_at_utc": timestamp,
+            "prepared_by": prepared_by,
+            "passage_count": len(queue),
+            "status": "ready",
+            "epistemic_status": (
+                "Passages indexés et ordonnés, "
+                "mais pas encore lus ni interprétés."
+            ),
+        }
+        updated["reading_queue"] = queue
+
+        history = journal.get("change_history", [])
+
+        if not isinstance(history, list):
+            history = []
+
+        updated["change_history"] = [
+            *history,
+            {
+                "event": "reading_queue_prepared",
+                "at_utc": timestamp,
+                "by": prepared_by,
+                "source_sha256": source_hash,
+                "passage_count": len(queue),
+                "reading_claimed": False,
+                "reflection_claimed": False,
+            },
+        ]
+
+        if commit:
+            _write_atomic(path, updated)
+
+        fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+    report = {
+        "journal_id": journal_id,
+        "source_sha256": source_hash,
+        "passage_count": len(queue),
+        "queued_passages": len(queue),
+        "already_prepared": False,
+        "committed": commit,
+    }
+
+    return updated, report
