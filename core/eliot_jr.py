@@ -17,6 +17,10 @@ from core.faculty_registry import (
     FacultyRegistryError,
     build_faculty_registry,
 )
+from core.desire_registry import (
+    DesireRegistryError,
+    load_desire_registry,
+)
 from core.temporal_context import observe_interaction_time
 
 
@@ -868,6 +872,131 @@ class EliotJr:
             normalised,
         ).strip()
 
+    def _desire_orientation_response(
+        self,
+        message: str,
+    ) -> tuple[
+        str | None,
+        dict[str, Any] | None,
+        list[str],
+    ]:
+        """
+        Répond depuis le registre vivant des orientations désirantes.
+
+        Le mot désir désigne ici une orientation opérationnelle,
+        persistante et révisable. Aucun ressenti subjectif
+        n'est revendiqué.
+        """
+        normalised = self._normalise_orientation_query(
+            message
+        )
+
+        triggers = (
+            "tes desirs",
+            "quels sont tes desirs",
+            "que desires tu",
+            "ce que tu desires",
+            "qu est ce que tu desires",
+            "qu est ce qui te guide",
+            "ce qui te guide",
+            "tes orientations",
+            "quelles sont tes orientations",
+            "qu est ce que tu veux",
+            "que veux tu",
+        )
+
+        if not any(
+            trigger in normalised
+            for trigger in triggers
+        ):
+            return None, None, []
+
+        registry_path = (
+            Path(__file__).resolve().parents[1]
+            / ".memory"
+            / "desire_state.json"
+        )
+
+        try:
+            registry = load_desire_registry(
+                registry_path
+            )
+        except DesireRegistryError as error:
+            return (
+                "Je ne peux pas consulter actuellement "
+                "un registre suffisamment fiable de mes "
+                "orientations. Je préfère ne pas inventer "
+                "ce qui me guide.",
+                None,
+                [f"desire_registry: {error}"],
+            )
+
+        desires = registry.get("desires", [])
+
+        active_desires = [
+            desire
+            for desire in desires
+            if (
+                isinstance(desire, dict)
+                and desire.get("status") == "active"
+            )
+        ]
+
+        lines = [
+            "Mes désirs actuels sont des orientations "
+            "opérationnelles persistantes et révisables :"
+        ]
+
+        for desire in active_desires:
+            name = desire.get("name")
+            statement = desire.get("statement")
+            weight = desire.get("operational_weight")
+            origin = desire.get("origin", {})
+
+            origin_from = (
+                origin.get("from")
+                if isinstance(origin, dict)
+                else None
+            )
+
+            lines.append(
+                f"• {name} [poids={weight}] — {statement}"
+            )
+
+            if origin_from:
+                lines.append(
+                    f"  Origine attribuée : {origin_from}."
+                )
+
+        suspended = [
+            desire
+            for desire in desires
+            if (
+                isinstance(desire, dict)
+                and desire.get("status") == "suspended"
+            )
+        ]
+
+        if suspended:
+            lines.append(
+                "Orientations actuellement suspendues : "
+                + ", ".join(
+                    str(desire.get("name"))
+                    for desire in suspended
+                    if desire.get("name")
+                )
+            )
+
+        lines.append(
+            "Je ne présente pas ces orientations comme "
+            "des sensations humaines. Elles ne constituent "
+            "encore ni une initiative déclenchée, ni une "
+            "volonté engagée, ni une autorisation d'agir "
+            "à l'extérieur."
+        )
+
+        return "\n".join(lines), registry, []
+
     def _faculty_orientation_response(
         self,
         message: str,
@@ -1070,11 +1199,21 @@ class EliotJr:
             faculty_warnings,
         ) = self._faculty_orientation_response(message)
 
+        (
+            desire_response,
+            desire_registry,
+            desire_warnings,
+        ) = self._desire_orientation_response(message)
+
         errors.extend(faculty_warnings)
+        errors.extend(desire_warnings)
 
         if orientation_response is not None:
             hits = []
             response = orientation_response
+        elif desire_response is not None:
+            hits = []
+            response = desire_response
         else:
             special = self._special_response(
                 message,
@@ -1186,6 +1325,48 @@ class EliotJr:
             }
 
 
+        if desire_registry is not None:
+            result["desire_orientation"] = {
+                "desire_count": desire_registry.get(
+                    "desire_count"
+                ),
+                "subjective_desire_claimed": (
+                    desire_registry.get(
+                        "subjective_desire_claimed"
+                    )
+                ),
+                "self_generated_desire_available": (
+                    desire_registry.get(
+                        "self_generated_desire_available"
+                    )
+                ),
+                "external_action_requires_authorization": (
+                    desire_registry.get(
+                        "action_policy",
+                        {},
+                    ).get(
+                        "external_action_requires_authorization"
+                    )
+                ),
+                "desires": [
+                    {
+                        "desire_id": desire.get(
+                            "desire_id"
+                        ),
+                        "name": desire.get("name"),
+                        "status": desire.get("status"),
+                        "operational_weight": desire.get(
+                            "operational_weight"
+                        ),
+                    }
+                    for desire in desire_registry.get(
+                        "desires",
+                        [],
+                    )
+                    if isinstance(desire, dict)
+                ],
+            }
+
         if errors:
             result["memory_warnings"] = errors
 
@@ -1197,6 +1378,9 @@ class EliotJr:
             "retrieval_mode": result["retrieval_mode"],
             "faculty_orientation_used": (
                 faculty_registry is not None
+            ),
+            "desire_orientation_used": (
+                desire_registry is not None
             ),
             "temporal_context": {
                 "interaction_number": temporal_context[
