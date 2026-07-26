@@ -7,6 +7,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from core.fragment_history import (
+    attach_fragment_metadata,
+    record_fragment_usage,
+)
 from core.octopus_reader import load_octopus_records
 from core.remote_library import sync_remote_library
 from core.temporal_context import observe_interaction_time
@@ -68,6 +72,9 @@ class EliotJr:
         self.remote_library_ttl = 900
         self.temporal_state_path = (
             self.root / ".memory" / "temporal_state.json"
+        )
+        self.fragment_history_path = (
+            self.root / ".memory" / "fragment_history.json"
         )
         self.timezone_name = "Europe/Paris"
 
@@ -168,7 +175,10 @@ class EliotJr:
             for path in sorted(root.rglob("*.json")):
                 # L’état de l’horloge organise la mémoire,
                 # mais ne constitue pas un souvenir sémantique.
-                if path == self.temporal_state_path:
+                if path in {
+                    self.temporal_state_path,
+                    self.fragment_history_path,
+                }:
                     continue
 
                 source_relative = path.relative_to(root)
@@ -288,6 +298,8 @@ class EliotJr:
         )
         records.extend(octopus_records)
         errors.extend(octopus_errors)
+
+        records = attach_fragment_metadata(records)
 
         return records, errors
 
@@ -598,6 +610,8 @@ class EliotJr:
                     score += 4
 
             item = {
+                "memory_id": record["memory_id"],
+                "content_hash": record["content_hash"],
                 "score": score,
                 "file": record["file"],
                 "section": record["section"],
@@ -618,14 +632,10 @@ class EliotJr:
         )
 
         unique: list[dict[str, Any]] = []
-        seen: set[tuple[str, str, str]] = set()
+        seen: set[str] = set()
 
         for item in ranked:
-            identity = (
-                item["file"],
-                item["title"],
-                item["snippet"],
-            )
+            identity = item["memory_id"]
 
             if identity in seen:
                 continue
@@ -833,6 +843,26 @@ class EliotJr:
 
         timestamp = temporal_context["now"]["utc"]
 
+        memory_usage: dict[str, Any] | None = None
+
+        if hits:
+            memory_usage, usage_warnings = record_fragment_usage(
+                registry_path=self.fragment_history_path,
+                usages=[
+                    {
+                        "memory_id": hit["memory_id"],
+                        "content_hash": hit["content_hash"],
+                    }
+                    for hit in hits
+                ],
+                interaction_number=temporal_context[
+                    "interaction_number"
+                ],
+                used_at_utc=timestamp,
+                commit=True,
+            )
+            errors.extend(usage_warnings)
+
         result: dict[str, Any] = {
             "input": message,
             "response": response,
@@ -840,6 +870,7 @@ class EliotJr:
             "temporal_context": temporal_context,
             "sources": [
                 {
+                    "memory_id": hit["memory_id"],
                     "file": hit["file"],
                     "section": hit["section"],
                     "title": hit["title"],
@@ -849,6 +880,9 @@ class EliotJr:
             ],
             "memory_records": len(records),
         }
+
+        if memory_usage is not None:
+            result["memory_usage"] = memory_usage
 
         if errors:
             result["memory_warnings"] = errors
