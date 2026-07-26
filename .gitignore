@@ -29,3 +29,6 @@ curriculum/journaux/*.lock
 .memory/initiative_state.json
 .memory/initiative_state.json.lock
 .memory/initiative_state.json.tmp
+.memory/will_state.json
+.memory/will_state.json.lock
+.memory/will_state.json.tmp
