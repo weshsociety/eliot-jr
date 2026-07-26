@@ -21,6 +21,10 @@ from core.desire_registry import (
     DesireRegistryError,
     load_desire_registry,
 )
+from core.initiative_registry import (
+    InitiativeRegistryError,
+    load_initiative_registry,
+)
 from core.temporal_context import observe_interaction_time
 
 
@@ -872,6 +876,162 @@ class EliotJr:
             normalised,
         ).strip()
 
+    def _initiative_orientation_response(
+        self,
+        message: str,
+    ) -> tuple[
+        str | None,
+        dict[str, Any] | None,
+        list[str],
+    ]:
+        """
+        Présente les propositions persistantes d'Eliot-Jr.
+
+        Une initiative reste une proposition révisable.
+        Elle ne constitue ni une impulsion ressentie,
+        ni une volonté engagée, ni une action accomplie.
+        """
+        normalised = self._normalise_orientation_query(
+            message
+        )
+
+        triggers = (
+            "tes initiatives",
+            "quelles sont tes initiatives",
+            "quelle est ton initiative",
+            "quelle est ta prochaine initiative",
+            "que proposes tu",
+            "qu est ce que tu proposes",
+            "ce que tu proposes",
+            "quelle est ta proposition",
+            "quelles sont tes propositions",
+            "que voudrais tu proposer",
+            "que veux tu faire maintenant",
+            "que ferais tu maintenant",
+        )
+
+        if not any(
+            trigger in normalised
+            for trigger in triggers
+        ):
+            return None, None, []
+
+        registry_path = (
+            Path(__file__).resolve().parents[1]
+            / ".memory"
+            / "initiative_state.json"
+        )
+
+        try:
+            registry = load_initiative_registry(
+                registry_path
+            )
+        except InitiativeRegistryError as error:
+            return (
+                "Je ne peux pas consulter actuellement "
+                "un registre suffisamment fiable de mes "
+                "initiatives. Je préfère ne pas inventer "
+                "une proposition.",
+                None,
+                [f"initiative_registry: {error}"],
+            )
+
+        initiatives = [
+            item
+            for item in registry.get("initiatives", [])
+            if isinstance(item, dict)
+        ]
+
+        initiatives.sort(
+            key=lambda item: (
+                -int(item.get("priority_score", 0)),
+                str(item.get("initiative_id", "")),
+            )
+        )
+
+        proposed = [
+            item
+            for item in initiatives
+            if item.get("status") == "proposed"
+        ]
+        suspended = [
+            item
+            for item in initiatives
+            if item.get("status") == "suspended"
+        ]
+        selected = [
+            item
+            for item in initiatives
+            if item.get("status") == "selected"
+        ]
+
+        lines = [
+            "Voici les initiatives que mon état actuel "
+            "fait émerger :"
+        ]
+
+        for initiative in proposed:
+            lines.append(
+                f"• {initiative.get('title')} "
+                f"[proposée, priorité="
+                f"{initiative.get('priority_score')}]"
+            )
+            lines.append(
+                f"  Proposition : "
+                f"{initiative.get('proposal')}"
+            )
+            lines.append(
+                f"  Étape intérieure possible : "
+                f"{initiative.get('next_internal_step')}"
+            )
+
+        for initiative in suspended:
+            blockers = initiative.get("blockers", [])
+
+            blockers_text = (
+                ", ".join(str(value) for value in blockers)
+                if isinstance(blockers, list) and blockers
+                else "limite non précisée"
+            )
+
+            lines.append(
+                f"• {initiative.get('title')} "
+                f"[suspendue, priorité="
+                f"{initiative.get('priority_score')}]"
+            )
+            lines.append(
+                f"  Proposition : "
+                f"{initiative.get('proposal')}"
+            )
+            lines.append(
+                f"  Blocage vérifié : {blockers_text}."
+            )
+
+        if not proposed and not suspended:
+            lines.append(
+                "• Aucune proposition active ou suspendue."
+            )
+
+        lines.append(
+            f"Aucune initiative n'est actuellement "
+            f"sélectionnée comme volonté : "
+            f"{len(selected)} sélection."
+            if len(selected) == 1
+            else
+            f"Aucune initiative n'est actuellement "
+            f"sélectionnée comme volonté : "
+            f"{len(selected)} sélections."
+        )
+
+        lines.append(
+            "Je présente ces éléments comme des propositions "
+            "computationnelles révisables. Aucune impulsion "
+            "subjective n'est revendiquée et aucune action "
+            "extérieure n'est autorisée ou accomplie."
+        )
+
+        return "\n".join(lines), registry, []
+
     def _desire_orientation_response(
         self,
         message: str,
@@ -1200,17 +1360,29 @@ class EliotJr:
         ) = self._faculty_orientation_response(message)
 
         (
+            initiative_response,
+            initiative_registry,
+            initiative_warnings,
+        ) = self._initiative_orientation_response(
+            message
+        )
+
+        (
             desire_response,
             desire_registry,
             desire_warnings,
         ) = self._desire_orientation_response(message)
 
         errors.extend(faculty_warnings)
+        errors.extend(initiative_warnings)
         errors.extend(desire_warnings)
 
         if orientation_response is not None:
             hits = []
             response = orientation_response
+        elif initiative_response is not None:
+            hits = []
+            response = initiative_response
         elif desire_response is not None:
             hits = []
             response = desire_response
@@ -1325,6 +1497,67 @@ class EliotJr:
             }
 
 
+        if initiative_registry is not None:
+            initiatives = initiative_registry.get(
+                "initiatives",
+                [],
+            )
+
+            result["initiative_orientation"] = {
+                "initiative_count": (
+                    initiative_registry.get(
+                        "initiative_count"
+                    )
+                ),
+                "initiative_generation_available": (
+                    initiative_registry.get(
+                        "initiative_generation_available"
+                    )
+                ),
+                "spontaneous_subjective_impulse_claimed": (
+                    initiative_registry.get(
+                        "spontaneous_subjective_impulse_claimed"
+                    )
+                ),
+                "external_action_performed": (
+                    initiative_registry.get(
+                        "external_action_performed"
+                    )
+                ),
+                "external_action_requires_human_authorization": (
+                    initiative_registry.get(
+                        "selection_policy",
+                        {},
+                    ).get(
+                        "external_action_requires_human_authorization"
+                    )
+                ),
+                "selected_count": sum(
+                    isinstance(item, dict)
+                    and item.get("status") == "selected"
+                    for item in initiatives
+                ),
+                "initiatives": [
+                    {
+                        "initiative_id": item.get(
+                            "initiative_id"
+                        ),
+                        "title": item.get("title"),
+                        "status": item.get("status"),
+                        "scope": item.get("scope"),
+                        "priority_score": item.get(
+                            "priority_score"
+                        ),
+                        "blockers": item.get(
+                            "blockers",
+                            [],
+                        ),
+                    }
+                    for item in initiatives
+                    if isinstance(item, dict)
+                ],
+            }
+
         if desire_registry is not None:
             result["desire_orientation"] = {
                 "desire_count": desire_registry.get(
@@ -1381,6 +1614,9 @@ class EliotJr:
             ),
             "desire_orientation_used": (
                 desire_registry is not None
+            ),
+            "initiative_orientation_used": (
+                initiative_registry is not None
             ),
             "temporal_context": {
                 "interaction_number": temporal_context[
