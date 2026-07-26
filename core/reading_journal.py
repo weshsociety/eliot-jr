@@ -669,3 +669,401 @@ def prepare_reading_queue(
     }
 
     return updated, report
+
+
+def record_validated_inference_result(
+    journals_root: Path,
+    journal_id: str,
+    request: dict[str, Any],
+    validated_result: dict[str, Any],
+    committed_by: str = "eliot_jr",
+    now: datetime | None = None,
+    commit: bool = True,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """
+    Inscrit atomiquement un résultat déjà validé.
+
+    Une tentative sans réflexion peut être archivée, mais elle ne
+    transforme pas le passage en lecture.
+
+    Une rencontre n'est enregistrée que lorsque le résultat :
+    - est validé ;
+    - correspond exactement à la requête et au passage ;
+    - identifie son moteur et son modèle ;
+    - contient une sortie structurée et provisoire.
+    """
+    path = _journal_path(journals_root, journal_id)
+    timestamp = _utc_now(now)
+
+    if not isinstance(request, dict):
+        raise ReadingJournalError(
+            "La requête d'inférence est invalide."
+        )
+
+    if not isinstance(validated_result, dict):
+        raise ReadingJournalError(
+            "Le résultat validé est invalide."
+        )
+
+    if validated_result.get("validated") is not True:
+        raise ReadingJournalError(
+            "Le résultat n'a pas franchi la validation."
+        )
+
+    request_hash = str(
+        request.get("request_sha256", "")
+    ).strip()
+    payload_hash = str(
+        request.get("payload_sha256", "")
+    ).strip()
+    result_hash = str(
+        validated_result.get("result_sha256", "")
+    ).strip()
+
+    if not request_hash or not payload_hash or not result_hash:
+        raise ReadingJournalError(
+            "Les empreintes d'audit sont incomplètes."
+        )
+
+    if (
+        validated_result.get("request_sha256")
+        != request_hash
+    ):
+        raise ReadingJournalError(
+            "Le résultat ne correspond pas à cette tentative."
+        )
+
+    if (
+        validated_result.get("payload_sha256")
+        != payload_hash
+    ):
+        raise ReadingJournalError(
+            "Le résultat ne correspond pas au contenu transmis."
+        )
+
+    passage = request.get("passage", {})
+
+    if not isinstance(passage, dict):
+        raise ReadingJournalError(
+            "Le passage de la requête est invalide."
+        )
+
+    passage_id = str(
+        passage.get("passage_id", "")
+    ).strip()
+    passage_hash = str(
+        passage.get("passage_sha256", "")
+    ).strip()
+
+    if not passage_id or not passage_hash:
+        raise ReadingJournalError(
+            "L'identité du passage est incomplète."
+        )
+
+    reflection_produced = validated_result.get(
+        "reflection_produced"
+    )
+
+    if not isinstance(reflection_produced, bool):
+        raise ReadingJournalError(
+            "reflection_produced doit être un booléen."
+        )
+
+    status = str(
+        validated_result.get("status", "")
+    ).strip()
+
+    lock_path = path.with_suffix(path.suffix + ".lock")
+
+    with lock_path.open("a+", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+
+        journal = _read_json(path)
+        queue = journal.get("reading_queue", [])
+
+        if not isinstance(queue, list):
+            raise ReadingJournalError(
+                "La file de lecture est invalide."
+            )
+
+        queue_index = next(
+            (
+                index
+                for index, item in enumerate(queue)
+                if (
+                    isinstance(item, dict)
+                    and item.get("passage_id") == passage_id
+                )
+            ),
+            None,
+        )
+
+        if queue_index is None:
+            raise ReadingJournalError(
+                f"Passage absent de la file : {passage_id}"
+            )
+
+        queue_item = queue[queue_index]
+
+        if (
+            queue_item.get("passage_sha256")
+            != passage_hash
+        ):
+            raise ReadingJournalError(
+                "L'empreinte du passage ne correspond pas "
+                "à la file de lecture."
+            )
+
+        encounters = journal.get("encounters", [])
+        attempts = journal.get("inference_attempts", [])
+        history = journal.get("change_history", [])
+
+        if not isinstance(encounters, list):
+            encounters = []
+
+        if not isinstance(attempts, list):
+            attempts = []
+
+        if not isinstance(history, list):
+            history = []
+
+        existing_encounter = next(
+            (
+                item
+                for item in encounters
+                if (
+                    isinstance(item, dict)
+                    and item.get("result_sha256") == result_hash
+                )
+            ),
+            None,
+        )
+
+        existing_attempt = next(
+            (
+                item
+                for item in attempts
+                if (
+                    isinstance(item, dict)
+                    and item.get("result_sha256") == result_hash
+                )
+            ),
+            None,
+        )
+
+        if existing_encounter is not None:
+            return journal, {
+                "journal_id": journal_id,
+                "passage_id": passage_id,
+                "event": "encounter_already_recorded",
+                "result_sha256": result_hash,
+                "already_recorded": True,
+                "committed": False,
+            }
+
+        if existing_attempt is not None:
+            return journal, {
+                "journal_id": journal_id,
+                "passage_id": passage_id,
+                "event": "attempt_already_recorded",
+                "result_sha256": result_hash,
+                "already_recorded": True,
+                "committed": False,
+            }
+
+        updated = dict(journal)
+
+        if not reflection_produced:
+            attempt = {
+                "attempt_number": len(attempts) + 1,
+                "passage_id": passage_id,
+                "passage_sha256": passage_hash,
+                "attempted_at_utc": timestamp,
+                "completed_at_utc": (
+                    validated_result.get("completed_at_utc")
+                ),
+                "status": status,
+                "engine_id": validated_result.get(
+                    "engine_id"
+                ),
+                "model": validated_result.get("model"),
+                "payload_sha256": payload_hash,
+                "request_sha256": request_hash,
+                "result_sha256": result_hash,
+                "message": validated_result.get("message"),
+                "reading_claimed": False,
+                "reflection_claimed": False,
+            }
+
+            updated["inference_attempts"] = [
+                *attempts,
+                attempt,
+            ]
+            updated["change_history"] = [
+                *history,
+                {
+                    "event": "inference_attempt_recorded",
+                    "at_utc": timestamp,
+                    "by": committed_by,
+                    "passage_id": passage_id,
+                    "status": status,
+                    "result_sha256": result_hash,
+                    "reading_claimed": False,
+                    "reflection_claimed": False,
+                },
+            ]
+
+            if commit:
+                _write_atomic(path, updated)
+
+            return updated, {
+                "journal_id": journal_id,
+                "passage_id": passage_id,
+                "event": "inference_attempt_recorded",
+                "status": status,
+                "passage_status": queue_item.get("status"),
+                "encounter_count": len(encounters),
+                "reflection_recorded": False,
+                "already_recorded": False,
+                "committed": commit,
+            }
+
+        if status != "completed":
+            raise ReadingJournalError(
+                "Une rencontre ne peut être enregistrée "
+                "qu'avec le statut completed."
+            )
+
+        if queue_item.get("status") != "queued":
+            raise ReadingJournalError(
+                f"Le passage {passage_id} n'est plus en attente."
+            )
+
+        model = validated_result.get("model")
+        output = validated_result.get("output")
+
+        if not isinstance(model, dict):
+            raise ReadingJournalError(
+                "L'attribution du modèle est absente."
+            )
+
+        if not isinstance(output, dict):
+            raise ReadingJournalError(
+                "La sortie structurée est absente."
+            )
+
+        updated_queue = [
+            dict(item) if isinstance(item, dict) else item
+            for item in queue
+        ]
+
+        updated_queue_item = dict(updated_queue[queue_index])
+        updated_queue_item.update({
+            "status": "encountered",
+            "exposed_at_utc": timestamp,
+            "inference_engine": {
+                "engine_id": validated_result.get(
+                    "engine_id"
+                ),
+                "model": model,
+            },
+            "reflection_status": "provisional_recorded",
+            "payload_sha256": payload_hash,
+            "request_sha256": request_hash,
+            "result_sha256": result_hash,
+        })
+        updated_queue[queue_index] = updated_queue_item
+
+        encounter = {
+            "encounter_number": len(encounters) + 1,
+            "encounter_id": (
+                f"{journal_id}:{passage_id}:"
+                f"{result_hash[:16]}"
+            ),
+            "passage_id": passage_id,
+            "passage_order": passage.get("order"),
+            "passage_sha256": passage_hash,
+            "encountered_at_utc": timestamp,
+            "engine_attribution": {
+                "engine_id": validated_result.get(
+                    "engine_id"
+                ),
+                "model": model,
+            },
+            "payload_sha256": payload_hash,
+            "request_sha256": request_hash,
+            "result_sha256": result_hash,
+            "authorship_status": (
+                "attributed_inference_output_integrated_"
+                "by_eliot_jr_protocol"
+            ),
+            "epistemic_status": (
+                "Sortie computationnelle provisoire, "
+                "attribuée à un moteur identifié. "
+                "Elle n'est ni une doctrine, ni une preuve "
+                "de conscience, ni une conclusion définitive."
+            ),
+            "what_passage_says": output.get(
+                "what_passage_says"
+            ),
+            "provisional_understanding": output.get(
+                "provisional_understanding"
+            ),
+            "questions_or_objections": output.get(
+                "questions_or_objections"
+            ),
+            "limits": output.get("limits"),
+        }
+
+        updated["reading_queue"] = updated_queue
+        updated["encounters"] = [
+            *encounters,
+            encounter,
+        ]
+        updated["encounter_count"] = len(encounters) + 1
+        updated["status"] = "reading"
+
+        reading_plan = journal.get("reading_plan", {})
+
+        if isinstance(reading_plan, dict):
+            updated_plan = dict(reading_plan)
+            updated_plan["status"] = "in_progress"
+            updated_plan["encountered_passages"] = (
+                len(encounters) + 1
+            )
+            updated_plan["remaining_passages"] = max(
+                len(queue) - len(encounters) - 1,
+                0,
+            )
+            updated["reading_plan"] = updated_plan
+
+        updated["change_history"] = [
+            *history,
+            {
+                "event": "validated_encounter_recorded",
+                "at_utc": timestamp,
+                "by": committed_by,
+                "passage_id": passage_id,
+                "engine_id": validated_result.get(
+                    "engine_id"
+                ),
+                "model": model,
+                "result_sha256": result_hash,
+                "reflection_status": "provisional_recorded",
+            },
+        ]
+
+        if commit:
+            _write_atomic(path, updated)
+
+    return updated, {
+        "journal_id": journal_id,
+        "passage_id": passage_id,
+        "event": "validated_encounter_recorded",
+        "status": "completed",
+        "passage_status": "encountered",
+        "encounter_count": len(encounters) + 1,
+        "reflection_recorded": True,
+        "already_recorded": False,
+        "committed": commit,
+    }
