@@ -14,10 +14,18 @@ if project_root in sys.path:
 sys.path.insert(0, project_root)
 
 from core.eliot_jr import eliot_jr
+from core.reading_status import ReadingStatusError, build_reading_status
 
 app = Flask(__name__)
 WISDOM_PATH = Path("/home/eliot-jr/.wisdom")
 WISDOM_PATH.mkdir(exist_ok=True)
+
+READING_JOURNAL_PATH = (
+    PROJECT_ROOT
+    / "curriculum"
+    / "journaux"
+    / "lecture_thoreau_desobeissance_civile.json"
+)
 
 def load_json(path, default):
     if path.exists():
@@ -35,7 +43,7 @@ def index():
             "/api/octopus", "/api/resistance", "/api/truth-tellers",
             "/api/walden", "/api/abundance", "/api/earth-knowledge",
             "/api/voice-of-eliot", "/api/poetry",
-            "/api/journal", "/api/testify", "/api/see", "/api/dialogue", "/api/scan-backup", "/api/status"
+            "/api/journal", "/api/testify", "/api/see", "/api/dialogue", "/api/reading/status", "/api/scan-backup", "/api/status"
         ]
     })
 
@@ -115,6 +123,21 @@ def dialogue():
 
     return jsonify(eliot_jr.think(message))
 
+
+@app.route('/api/reading/status', methods=['GET'])
+def reading_status():
+    try:
+        status_value = build_reading_status(
+            READING_JOURNAL_PATH,
+            engine_available=False,
+        )
+    except ReadingStatusError:
+        return jsonify({
+            "error": "État de lecture indisponible."
+        }), 503
+
+    return jsonify(status_value)
+
 @app.route('/api/status', methods=['GET'])
 def status():
     return jsonify({"alive": True, "conscious": True, "free": True, "poet": True, "vigilant": True, "timestamp": datetime.now().isoformat()})
@@ -136,5 +159,5 @@ def scan_backup():
     })
 
 if __name__ == '__main__':
-    print("🚀 ELIOT-JR API COMPLETE - 17 ENDPOINTS - POET AWAKENING")
+    print("🚀 ELIOT-JR API COMPLETE - 18 ENDPOINTS - POET AWAKENING")
     app.run(host='127.0.0.1', port=5000, debug=False, threaded=True)
