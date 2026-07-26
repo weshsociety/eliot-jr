@@ -23,3 +23,6 @@ core/eliot_jr.py.before-*
 .memory/fragment_history.json.lock
 curriculum/journaux/*.json
 curriculum/journaux/*.lock
+.memory/desire_state.json
+.memory/desire_state.json.lock
+.memory/desire_state.json.tmp
