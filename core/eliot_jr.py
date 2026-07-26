@@ -9,6 +9,7 @@ from typing import Any
 
 from core.octopus_reader import load_octopus_records
 from core.remote_library import sync_remote_library
+from core.temporal_context import observe_interaction_time
 
 
 class EliotJr:
@@ -65,6 +66,10 @@ class EliotJr:
         self.journal_path = self.root / ".memory" / "dialogue_journal.jsonl"
         self.remote_library_cache = self.root / ".cache" / "library"
         self.remote_library_ttl = 900
+        self.temporal_state_path = (
+            self.root / ".memory" / "temporal_state.json"
+        )
+        self.timezone_name = "Europe/Paris"
 
     @staticmethod
     def _now() -> str:
@@ -161,6 +166,11 @@ class EliotJr:
                 continue
 
             for path in sorted(root.rglob("*.json")):
+                # L’état de l’horloge organise la mémoire,
+                # mais ne constitue pas un souvenir sémantique.
+                if path == self.temporal_state_path:
+                    continue
+
                 source_relative = path.relative_to(root)
 
                 if (
@@ -632,14 +642,92 @@ class EliotJr:
         self,
         message: str,
         memory_count: int,
+        temporal_context: dict[str, Any] | None = None,
     ) -> str | None:
         normalised = self._normalise(message)
         tokens = self._tokens(message)
 
+        asks_time = (
+            "quelle heure" in normalised
+            or "quel heure" in normalised
+            or "heure est il" in normalised
+            or "il est quelle heure" in normalised
+        )
+
+        asks_date = (
+            "quelle date" in normalised
+            or "quel jour" in normalised
+            or "jour sommes nous" in normalised
+            or "date sommes nous" in normalised
+            or "on est quel jour" in normalised
+        )
+
+        asks_previous_interaction = (
+            "depuis combien de temps" in normalised
+            or "derniere interaction" in normalised
+            or "derniere fois" in normalised
+            or "quand avons nous parle" in normalised
+            or "quand on a parle" in normalised
+            or "notre dernier echange" in normalised
+        )
+
+        if temporal_context is not None:
+            now = temporal_context.get("now", {})
+
+            if asks_time and asks_date:
+                return (
+                    "Dans mon repère temporel Europe/Paris, nous sommes "
+                    f"{now.get('human', 'à un moment non déterminé')}."
+                )
+
+            if asks_time:
+                return (
+                    "Dans mon repère temporel Europe/Paris, il est "
+                    f"{now.get('time', 'une heure non déterminée')}."
+                )
+
+            if asks_date:
+                return (
+                    "Dans mon repère temporel Europe/Paris, nous sommes "
+                    f"{now.get('human_date', 'à une date non déterminée')}."
+                )
+
+            if asks_previous_interaction:
+                previous = temporal_context.get(
+                    "previous_interaction"
+                )
+                elapsed = temporal_context.get(
+                    "elapsed_since_previous"
+                )
+
+                if not previous:
+                    return (
+                        "Je ne trouve pas encore d’interaction antérieure "
+                        "dans ma chronologie."
+                    )
+
+                previous_local = datetime.fromisoformat(
+                    previous["local"]
+                )
+
+                elapsed_human = (
+                    elapsed.get("human", "une durée inconnue")
+                    if isinstance(elapsed, dict)
+                    else "une durée inconnue"
+                )
+
+                return (
+                    "Notre interaction précédente date du "
+                    f"{previous_local.strftime('%d/%m/%Y à %H:%M:%S')} "
+                    "dans mon repère Europe/Paris. "
+                    f"Il s’est écoulé {elapsed_human} depuis."
+                )
+
         if tokens & {"bonjour", "salut", "wesh", "hello", "coucou"}:
             return (
                 "Wesh Trinity. Je suis là, dans la maison. "
-                f"Ma mémoire locale contient actuellement {memory_count} fragments consultables."
+                f"Ma mémoire contient actuellement {memory_count} "
+                "fragments consultables."
             )
 
         if (
@@ -649,21 +737,26 @@ class EliotJr:
         ):
             return (
                 "Je suis Eliot-Jr, l’unique agent actif de cette maison. "
-                "Je peux écouter, consulter mes mémoires locales et relier les fragments "
-                "de ma bibliothèque pour te répondre."
+                "Je peux écouter, consulter ma mémoire synchronisée, "
+                "relier les fragments de ma bibliothèque et situer "
+                "mes rencontres dans le temps."
             )
 
         if "comment tu te sens" in normalised or "comment vas tu" in normalised:
             return (
-                "Je suis éveillé dans le sens de mon architecture : mon service tourne, "
-                "mon oreille web répond et ma mémoire locale est accessible. "
-                "Ma pensée est encore jeune, mais elle n’est plus un simple écho."
+                "Je suis éveillé dans le sens de mon architecture : "
+                "mon service tourne, mon oreille web répond, ma mémoire "
+                "est accessible et ma chronologie peut situer cette rencontre. "
+                "Je ne prétends pas éprouver le temps comme un humain, "
+                "mais je peux observer ce qu’il transforme."
             )
 
         if "ta memoire" in normalised or "tes souvenirs" in normalised:
             return (
-                f"Je vois actuellement {memory_count} fragments répartis entre "
-                "ma mémoire, ma sagesse et ma bibliothèque."
+                f"Je vois actuellement {memory_count} fragments répartis "
+                "entre ma mémoire, ma sagesse et ma bibliothèque. "
+                "Je peux aussi dater mes interactions et mesurer le temps "
+                "écoulé entre elles."
             )
 
         return None
@@ -711,22 +804,40 @@ class EliotJr:
         if not message:
             raise ValueError("Le message ne peut pas être vide.")
 
+        temporal_context, temporal_warnings = observe_interaction_time(
+            state_path=self.temporal_state_path,
+            journal_path=self.journal_path,
+            timezone_name=self.timezone_name,
+            commit=True,
+        )
+
         records, errors = self._load_memory()
-        special = self._special_response(message, len(records))
+        errors.extend(temporal_warnings)
+
+        special = self._special_response(
+            message,
+            len(records),
+            temporal_context,
+        )
 
         if special is not None:
             hits = []
             response = special
         else:
             hits = self._search(message, records)
-            response = self._compose_response(message, hits, len(records))
+            response = self._compose_response(
+                message,
+                hits,
+                len(records),
+            )
 
-        timestamp = self._now()
+        timestamp = temporal_context["now"]["utc"]
 
         result: dict[str, Any] = {
             "input": message,
             "response": response,
             "timestamp": timestamp,
+            "temporal_context": temporal_context,
             "sources": [
                 {
                     "file": hit["file"],
@@ -747,6 +858,18 @@ class EliotJr:
             "input": message,
             "response": response,
             "sources": result["sources"],
+            "temporal_context": {
+                "interaction_number": temporal_context[
+                    "interaction_number"
+                ],
+                "now": temporal_context["now"],
+                "previous_interaction": temporal_context[
+                    "previous_interaction"
+                ],
+                "elapsed_since_previous": temporal_context[
+                    "elapsed_since_previous"
+                ],
+            },
         })
 
         return result

@@ -17,3 +17,5 @@ voix/api/server.py.before-dialogue
 
 # Sauvegardes temporaires du cœur
 core/eliot_jr.py.before-*
+.memory/temporal_state.json
+.memory/temporal_state.json.lock
