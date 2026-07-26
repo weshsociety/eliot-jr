@@ -11,3 +11,9 @@ eliot-jr-api.py.before-dialogue
 voix/api/server.py.before-dialogue
 .memory/*.before-repair
 .memory/dialogue_journal.jsonl
+
+# Cache de la bibliothèque distante
+.cache/
+
+# Sauvegardes temporaires du cœur
+core/eliot_jr.py.before-*

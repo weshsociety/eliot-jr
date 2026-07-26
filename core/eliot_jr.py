@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from core.octopus_reader import load_octopus_records
+from core.remote_library import sync_remote_library
 
 
 class EliotJr:
@@ -62,6 +63,8 @@ class EliotJr:
             self.root / "bibliotheque",
         ]
         self.journal_path = self.root / ".memory" / "dialogue_journal.jsonl"
+        self.remote_library_cache = self.root / ".cache" / "library"
+        self.remote_library_ttl = 900
 
     @staticmethod
     def _now() -> str:
@@ -110,35 +113,114 @@ class EliotJr:
         records: list[dict[str, Any]] = []
         errors: list[str] = []
 
-        for root in self.memory_roots:
+        remote_books_root, remote_errors = sync_remote_library(
+            cache_root=self.remote_library_cache,
+            ttl_seconds=self.remote_library_ttl,
+        )
+        errors.extend(remote_errors)
+
+        remote_book_ids: set[str] = set()
+
+        if remote_books_root and remote_books_root.is_dir():
+            remote_book_ids = {
+                path.name
+                for path in remote_books_root.iterdir()
+                if path.is_dir()
+            }
+
+        # Chaque source possède :
+        # - son véritable dossier ;
+        # - un préfixe virtuel éventuel ;
+        # - les livres à ignorer dans cette source.
+        #
+        # Un livre disponible dans le cache distant remplace sa copie locale.
+        # Les autres livres locaux restent disponibles comme secours.
+        memory_sources: list[
+            tuple[Path, str | None, set[str]]
+        ] = [
+            (self.root / ".memory", None, set()),
+            (self.root / ".wisdom", None, set()),
+            (
+                self.root / "bibliotheque",
+                "bibliotheque",
+                remote_book_ids,
+            ),
+        ]
+
+        if remote_books_root and remote_books_root.is_dir():
+            memory_sources.append(
+                (
+                    remote_books_root,
+                    "bibliotheque",
+                    set(),
+                )
+            )
+
+        for root, virtual_prefix, skipped_books in memory_sources:
             if not root.exists():
                 continue
 
             for path in sorted(root.rglob("*.json")):
-                try:
-                    data = json.loads(path.read_text(encoding="utf-8"))
-                except (OSError, json.JSONDecodeError) as exc:
-                    errors.append(f"{path.relative_to(self.root)}: {exc}")
+                source_relative = path.relative_to(root)
+
+                if (
+                    skipped_books
+                    and source_relative.parts
+                    and source_relative.parts[0] in skipped_books
+                ):
                     continue
 
-                relative_path = str(path.relative_to(self.root))
+                try:
+                    data = json.loads(
+                        path.read_text(encoding="utf-8")
+                    )
+                except (OSError, json.JSONDecodeError) as exc:
+                    if virtual_prefix:
+                        error_path = (
+                            Path(virtual_prefix) / source_relative
+                        )
+                    else:
+                        error_path = path.relative_to(self.root)
+
+                    errors.append(f"{error_path}: {exc}")
+                    continue
+
+                if virtual_prefix:
+                    relative_path = str(
+                        Path(virtual_prefix) / source_relative
+                    )
+                else:
+                    relative_path = str(path.relative_to(self.root))
 
                 if isinstance(data, dict):
-                    is_chant_sacre_book = relative_path.startswith(
-                        "bibliotheque/chant_sacre_des_energies/"
+                    relative_parts = Path(relative_path).parts
+                    is_structured_book = (
+                        len(relative_parts) >= 3
+                        and relative_parts[0] == "bibliotheque"
+                    )
+
+                    book_id = (
+                        relative_parts[1]
+                        if is_structured_book
+                        else ""
                     )
 
                     # Une table des matières est un document de navigation,
-                    # pas neuf souvenirs affirmant que les chapitres existent.
+                    # pas une collection de souvenirs indépendants.
                     if (
-                        is_chant_sacre_book
+                        is_structured_book
                         and path.name == "table_des_matieres.json"
                     ):
                         toc_data = dict(data)
+                        readable_title = (
+                            book_id
+                            .replace("_", " ")
+                            .replace("-", " ")
+                            .title()
+                        )
                         toc_data.setdefault(
                             "title",
-                            "Table des matières — "
-                            "Le Chant sacré des énergies",
+                            f"Table des matières — {readable_title}",
                         )
                         records.append({
                             "file": relative_path,
@@ -150,7 +232,7 @@ class EliotJr:
                     # Dans un livre structuré, seuls les fragments portent
                     # une connaissance directement interrogeable.
                     if (
-                        is_chant_sacre_book
+                        is_structured_book
                         and isinstance(data.get("fragments"), list)
                     ):
                         for item in data["fragments"]:
@@ -168,6 +250,7 @@ class EliotJr:
                             continue
 
                         emitted_list = True
+
                         for item in value:
                             records.append({
                                 "file": relative_path,
@@ -608,8 +691,8 @@ class EliotJr:
             lines.append(f"• {hit['title']} — {hit['snippet']}")
 
         lines.append(
-            "Je construis cette réponse à partir de mes archives locales, "
-            "sans ajouter de fait extérieur."
+            "Je construis cette réponse à partir de ma bibliothèque synchronisée "
+            "et de mes archives locales, sans ajouter de fait extérieur."
         )
 
         return "\n\n".join(lines)
