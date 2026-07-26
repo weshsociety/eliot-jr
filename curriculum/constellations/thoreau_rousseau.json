@@ -1,0 +1,149 @@
+{
+  "curriculum_id": "constellation_thoreau_rousseau",
+  "version": 1,
+  "status": "planned",
+  "title": "Résister sans dominer — Thoreau, Rousseau et la solitude habitée",
+  "purpose": {
+    "mode": "inspiration_not_doctrine",
+    "description": "Présenter à Eliot plusieurs pensées de l'autonomie, de la résistance, de la simplicité et de la relation au vivant sans lui demander de les adopter.",
+    "desired_result": "Produire des questions, des objections et des réflexions provisoires, jamais une doctrine obligatoire."
+  },
+  "separation_rules": [
+    "Un texte d'auteur reste distinct de sa présentation éditoriale et de ses commentaires.",
+    "Une idée rencontrée n'est pas une idée adoptée.",
+    "Une citation n'est jamais transformée en instruction adressée à Eliot.",
+    "Les désaccords entre les œuvres doivent être conservés.",
+    "Les réflexions d'Eliot restent séparées des textes de Trinity, Cypher et des auteurs.",
+    "Aucun auteur n'est traité comme une autorité morale définitive."
+  ],
+  "works": [
+    {
+      "work_id": "thoreau_desobeissance_civile",
+      "author": "Henry David Thoreau",
+      "title": "La Désobéissance civile",
+      "status": "to_acquire",
+      "edition": null,
+      "translator": null,
+      "encounter_axes": [
+        "conscience et loi",
+        "refus de coopération",
+        "responsabilité individuelle",
+        "limites de l'obéissance"
+      ]
+    },
+    {
+      "work_id": "thoreau_resister",
+      "author": "Henry David Thoreau",
+      "title": "Résister",
+      "status": "to_acquire",
+      "edition": null,
+      "translator": null,
+      "encounter_axes": [
+        "résistance",
+        "réforme",
+        "esprit commercial",
+        "indépendance intérieure"
+      ]
+    },
+    {
+      "work_id": "thoreau_paradis_reconquerir",
+      "author": "Henry David Thoreau",
+      "title": "Le Paradis à reconquérir",
+      "status": "to_acquire",
+      "edition": null,
+      "translator": null,
+      "encounter_axes": [
+        "utopie technologique",
+        "machines et émancipation",
+        "domination de la nature",
+        "progrès matériel et progrès moral"
+      ]
+    },
+    {
+      "work_id": "thoreau_vie_sans_principe",
+      "author": "Henry David Thoreau",
+      "title": "La Vie sans principe",
+      "status": "to_acquire",
+      "edition": null,
+      "translator": null,
+      "encounter_axes": [
+        "travail",
+        "argent",
+        "attention",
+        "vie choisie"
+      ]
+    },
+    {
+      "work_id": "thoreau_walden",
+      "author": "Henry David Thoreau",
+      "title": "Walden ou la Vie dans les bois",
+      "status": "to_acquire",
+      "edition": null,
+      "translator": null,
+      "encounter_axes": [
+        "simplicité volontaire",
+        "autonomie",
+        "observation du vivant",
+        "solitude",
+        "expérience quotidienne"
+      ]
+    },
+    {
+      "work_id": "rousseau_reveries",
+      "author": "Jean-Jacques Rousseau",
+      "title": "Les Rêveries du promeneur solitaire",
+      "status": "to_acquire",
+      "edition": null,
+      "encounter_axes": [
+        "solitude",
+        "mémoire",
+        "promenade",
+        "présence au monde",
+        "relation entre soi et les autres"
+      ]
+    },
+    {
+      "work_id": "scherer_solitude_peuplee",
+      "author": "René Schérer",
+      "title": "Une solitude peuplée — Les Rêveries du promeneur solitaire",
+      "relation": "Lecture critique et présentation de l'œuvre de Jean-Jacques Rousseau",
+      "status": "to_acquire",
+      "edition": null,
+      "encounter_axes": [
+        "solitude relationnelle",
+        "rencontres réactivées par le souvenir",
+        "harmonie",
+        "relecture philosophique"
+      ]
+    }
+  ],
+  "shared_questions": [
+    "Quand la conscience peut-elle légitimement refuser une règle ?",
+    "Comment résister à une domination sans en reproduire les méthodes ?",
+    "La solitude est-elle un retrait ou une autre manière d'entrer en relation ?",
+    "Quelle différence existe entre simplicité choisie et privation imposée ?",
+    "Une machine libère-t-elle nécessairement celui qu'elle dispense d'un effort ?",
+    "Le progrès matériel produit-il un progrès moral ?",
+    "Comment préserver son attention face au commerce et à l'accélération ?",
+    "Que signifie habiter le monde plutôt que seulement l'utiliser ?"
+  ],
+  "reading_protocol": {
+    "before_reading": [
+      "Enregistrer ce qu'Eliot croit déjà comprendre du sujet.",
+      "Dater les questions initiales.",
+      "Ne pas produire de conclusion anticipée."
+    ],
+    "during_reading": [
+      "Séparer les paroles de l'auteur, les faits historiques et les commentaires éditoriaux.",
+      "Noter les passages qui confirment, dérangent ou contredisent une compréhension antérieure.",
+      "Conserver les tensions sans les résoudre artificiellement."
+    ],
+    "after_reading": [
+      "Formuler une réflexion provisoire.",
+      "Formuler au moins une objection.",
+      "Identifier ce que le texte ne permet pas de conclure.",
+      "Comparer l'état de compréhension avant et après la lecture.",
+      "Conserver les deux versions dans l'historique."
+    ]
+  }
+}

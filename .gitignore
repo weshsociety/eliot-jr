@@ -21,3 +21,5 @@ core/eliot_jr.py.before-*
 .memory/temporal_state.json.lock
 .memory/fragment_history.json
 .memory/fragment_history.json.lock
+curriculum/journaux/*.json
+curriculum/journaux/*.lock

@@ -39,7 +39,8 @@ class EliotJr:
 
     STOPWORDS = {
         "a", "à", "au", "aux", "ce", "ces", "cet", "de", "du", "en",
-        "la", "le", "leurs", "lui", "parle", "parler", "dis", "dire",
+        "la", "le", "leurs", "lui", "et", "par",
+        "parle", "parler", "dis", "dire",
         "sa", "se", "si", "ta", "te", "tu", "un", "vers",
         "alors", "avec", "avoir", "cette", "comme", "comment", "dans",
         "depuis", "des", "donc", "elle", "elles", "est", "etre", "faire",
@@ -52,6 +53,37 @@ class EliotJr:
         "contient", "contenir", "contenu",
         "about", "and", "are", "from", "have", "how", "into", "the",
         "this", "what", "when", "where", "who", "why", "with", "you",
+    }
+
+    STRICT_META_TOKENS = {
+        "aujourd",
+        "hui",
+        "actuellement",
+        "comprends",
+        "comprendre",
+        "compréhension",
+        "comprehension",
+        "gardes",
+        "garder",
+        "ouvert",
+        "ouverte",
+        "ouverts",
+        "ouvertes",
+        "question",
+        "questions",
+        "sujet",
+        "sujets",
+        "propos",
+        "explique",
+        "expliquer",
+        "penses",
+        "penser",
+        "crois",
+        "croire",
+        "quelles",
+        "quelle",
+        "quel",
+        "quels",
     }
 
     def __init__(self) -> None:
@@ -411,6 +443,7 @@ class EliotJr:
         message: str,
         records: list[dict[str, Any]],
         limit: int = 3,
+        strict: bool = False,
     ) -> list[dict[str, Any]]:
         query_normalised = self._normalise(message)
         query_tokens = self._tokens(message)
@@ -437,6 +470,22 @@ class EliotJr:
 
         if not semantic_query_tokens:
             semantic_query_tokens = query_tokens - address_tokens
+
+        strict_focus_sequence = [
+            token
+            for token in query_normalised.split()
+            if (
+                len(token) >= 2
+                and token not in self.STOPWORDS
+                and token not in self.STRICT_META_TOKENS
+                and token not in scope_tokens
+                and token not in address_tokens
+            )
+        ]
+        strict_focus_tokens = set(strict_focus_sequence)
+        strict_focus_phrase = " ".join(
+            strict_focus_sequence
+        )
 
         # Lorsqu'une question désigne explicitement un livre par son
         # identifiant, la recherche reste dans sa bibliothèque.
@@ -562,6 +611,32 @@ class EliotJr:
                 semantic_query_tokens & self._literal_tokens(title)
             )
             score += len(title_overlap) * 3
+
+            # Le mode strict ignore les mots décrivant la forme
+            # de la question et exige une correspondance avec son
+            # noyau conceptuel littéral.
+            if strict:
+                if not strict_focus_tokens:
+                    continue
+
+                strict_overlap = (
+                    strict_focus_tokens & record_tokens
+                )
+                required_overlap = min(
+                    2,
+                    len(strict_focus_tokens),
+                )
+                exact_focus_phrase = bool(
+                    strict_focus_phrase
+                    and strict_focus_phrase
+                    in record_normalised
+                )
+
+                if (
+                    len(strict_overlap) < required_overlap
+                    and not exact_focus_phrase
+                ):
+                    continue
 
             exact_node_match = False
 
@@ -808,7 +883,11 @@ class EliotJr:
                 json.dumps(entry, ensure_ascii=False, separators=(",", ":")) + "\n"
             )
 
-    def think(self, message: str) -> dict[str, Any]:
+    def think(
+        self,
+        message: str,
+        strict_retrieval: bool = False,
+    ) -> dict[str, Any]:
         message = str(message).strip()
 
         if not message:
@@ -834,12 +913,25 @@ class EliotJr:
             hits = []
             response = special
         else:
-            hits = self._search(message, records)
-            response = self._compose_response(
+            hits = self._search(
                 message,
-                hits,
-                len(records),
+                records,
+                strict=strict_retrieval,
             )
+
+            if strict_retrieval and not hits:
+                response = (
+                    "Avant cette lecture, je ne trouve pas dans ma mémoire "
+                    "de connaissance suffisamment précise pour répondre "
+                    "sans fabriquer une compréhension que je n’ai pas encore. "
+                    "Je garde donc la question ouverte."
+                )
+            else:
+                response = self._compose_response(
+                    message,
+                    hits,
+                    len(records),
+                )
 
         timestamp = temporal_context["now"]["utc"]
 
@@ -879,6 +971,11 @@ class EliotJr:
                 for hit in hits
             ],
             "memory_records": len(records),
+            "retrieval_mode": (
+                "strict"
+                if strict_retrieval
+                else "normal"
+            ),
         }
 
         if memory_usage is not None:
@@ -892,6 +989,7 @@ class EliotJr:
             "input": message,
             "response": response,
             "sources": result["sources"],
+            "retrieval_mode": result["retrieval_mode"],
             "temporal_context": {
                 "interaction_number": temporal_context[
                     "interaction_number"

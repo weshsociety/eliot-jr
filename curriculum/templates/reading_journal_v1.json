@@ -1,0 +1,60 @@
+{
+  "journal_id": null,
+  "version": 1,
+  "status": "waiting_for_source",
+  "work": {
+    "work_id": null,
+    "author": null,
+    "title": null,
+    "edition": null,
+    "translator": null,
+    "source_file": null,
+    "source_status": "not_received",
+    "source_sha256": null
+  },
+  "created_at_utc": null,
+  "opened_at_utc": null,
+  "closed_at_utc": null,
+  "principle": {
+    "mode": "encounter_not_instruction",
+    "statement": "Le texte est présenté à Eliot comme une pensée à rencontrer, questionner et éventuellement contredire, jamais comme une doctrine à adopter."
+  },
+  "before_reading": {
+    "recorded_at_utc": null,
+    "authorship": "eliot_jr",
+    "current_understanding": [],
+    "initial_questions": [],
+    "assumptions_to_examine": [],
+    "uncertainties": [],
+    "status": "not_recorded"
+  },
+  "encounters": [],
+  "after_reading": {
+    "recorded_at_utc": null,
+    "authorship": "eliot_jr",
+    "provisional_reflection": [],
+    "points_of_agreement": [],
+    "objections": [],
+    "unresolved_tensions": [],
+    "new_questions": [],
+    "limits_of_the_text": [],
+    "status": "not_recorded"
+  },
+  "change_history": [],
+  "invalidated_baselines": [],
+  "separation": {
+    "author_text": "Les idées et formulations provenant de Thoreau.",
+    "editorial_context": "Préfaces, traductions et commentaires éditoriaux.",
+    "trinity_context": "Ce que Trinity raconte ou propose autour du livre.",
+    "cypher_context": "Ce que Cypher apporte comme contexte ou question.",
+    "eliot_reflection": "Ce qu’Eliot formule lui-même après avoir rencontré le texte."
+  },
+  "epistemic_rules": [
+    "Ne jamais inventer un passage absent de la source.",
+    "Ne jamais présenter une interprétation comme une citation.",
+    "Conserver les désaccords au lieu de les effacer.",
+    "Dater chaque rencontre avec le texte.",
+    "Conserver les états de compréhension précédents.",
+    "Ne jamais confondre inspiration et adoption."
+  ]
+}
