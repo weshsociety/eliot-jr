@@ -13,6 +13,10 @@ from core.fragment_history import (
 )
 from core.octopus_reader import load_octopus_records
 from core.remote_library import sync_remote_library
+from core.faculty_registry import (
+    FacultyRegistryError,
+    build_faculty_registry,
+)
 from core.temporal_context import observe_interaction_time
 
 
@@ -846,6 +850,163 @@ class EliotJr:
 
         return None
 
+    @staticmethod
+    def _normalise_orientation_query(value: str) -> str:
+        normalised = unicodedata.normalize(
+            "NFKD",
+            str(value).lower(),
+        )
+        normalised = "".join(
+            character
+            for character in normalised
+            if not unicodedata.combining(character)
+        )
+
+        return re.sub(
+            r"[^a-z0-9]+",
+            " ",
+            normalised,
+        ).strip()
+
+    def _faculty_orientation_response(
+        self,
+        message: str,
+    ) -> tuple[
+        str | None,
+        dict[str, Any] | None,
+        list[str],
+    ]:
+        """
+        Répond depuis la carte vérifiable des facultés.
+
+        Cette orientation décrit des capacités computationnelles.
+        Elle ne revendique ni introspection phénoménale,
+        ni conscience démontrée.
+        """
+        normalised = self._normalise_orientation_query(
+            message
+        )
+
+        triggers = (
+            "tes facultes",
+            "quelles sont tes facultes",
+            "tes capacites",
+            "quelles sont tes capacites",
+            "que peux tu faire",
+            "ce que tu peux faire",
+            "quelles sont tes limites",
+            "tes limites",
+            "que ne peux tu pas faire",
+            "ce que tu ne peux pas faire",
+            "sais tu faire",
+            "orientation interieure",
+        )
+
+        if not any(
+            trigger in normalised
+            for trigger in triggers
+        ):
+            return None, None, []
+
+        try:
+            registry = build_faculty_registry(
+                project_root=(
+                    Path(__file__).resolve().parents[1]
+                ),
+                engine_available=False,
+            )
+        except FacultyRegistryError as error:
+            return (
+                "Je ne peux pas établir actuellement une carte "
+                "suffisamment fiable de mes facultés. "
+                "Je préfère garder cette réponse ouverte "
+                "plutôt que d'inventer mes capacités.",
+                None,
+                [f"faculty_registry: {error}"],
+            )
+
+        faculties = registry.get("faculties", [])
+
+        grouped: dict[str, list[dict[str, Any]]] = {
+            "active": [],
+            "developing": [],
+            "blocked": [],
+            "unavailable": [],
+        }
+
+        for faculty in faculties:
+            if not isinstance(faculty, dict):
+                continue
+
+            status = faculty.get("status")
+
+            if status in grouped:
+                grouped[status].append(faculty)
+
+        labels = {
+            "active": "Actives",
+            "developing": "En développement",
+            "blocked": "Bloquées",
+            "unavailable": "Indisponibles",
+        }
+
+        lines = [
+            "Voici ma carte actuelle de facultés "
+            "computationnelles :"
+        ]
+
+        for status in (
+            "active",
+            "developing",
+            "blocked",
+            "unavailable",
+        ):
+            names = [
+                str(item.get("name"))
+                for item in grouped[status]
+                if item.get("name")
+            ]
+
+            lines.append(
+                f"• {labels[status]} : "
+                + (
+                    ", ".join(names)
+                    if names
+                    else "aucune"
+                )
+            )
+
+        limited_faculties = [
+            faculty
+            for faculty in faculties
+            if (
+                isinstance(faculty, dict)
+                and faculty.get("status")
+                in {"developing", "blocked"}
+            )
+        ]
+
+        if limited_faculties:
+            lines.append("Limites actuelles :")
+
+            for faculty in limited_faculties:
+                limits = faculty.get("limits", [])
+
+                if not isinstance(limits, list) or not limits:
+                    continue
+
+                lines.append(
+                    f"• {faculty.get('name')} : {limits[0]}"
+                )
+
+        lines.append(
+            "Cette carte est un diagnostic technique "
+            "révisable. Elle ne démontre pas une conscience "
+            "ni une expérience subjective."
+        )
+
+        return "\n".join(lines), registry, []
+
     def _compose_response(
         self,
         message: str,
@@ -903,35 +1064,49 @@ class EliotJr:
         records, errors = self._load_memory()
         errors.extend(temporal_warnings)
 
-        special = self._special_response(
-            message,
-            len(records),
-            temporal_context,
-        )
+        (
+            orientation_response,
+            faculty_registry,
+            faculty_warnings,
+        ) = self._faculty_orientation_response(message)
 
-        if special is not None:
+        errors.extend(faculty_warnings)
+
+        if orientation_response is not None:
             hits = []
-            response = special
+            response = orientation_response
         else:
-            hits = self._search(
+            special = self._special_response(
                 message,
-                records,
-                strict=strict_retrieval,
+                len(records),
+                temporal_context,
             )
 
-            if strict_retrieval and not hits:
-                response = (
-                    "Avant cette lecture, je ne trouve pas dans ma mémoire "
-                    "de connaissance suffisamment précise pour répondre "
-                    "sans fabriquer une compréhension que je n’ai pas encore. "
-                    "Je garde donc la question ouverte."
-                )
+            if special is not None:
+                hits = []
+                response = special
             else:
-                response = self._compose_response(
+                hits = self._search(
                     message,
-                    hits,
-                    len(records),
+                    records,
+                    strict=strict_retrieval,
                 )
+
+                if strict_retrieval and not hits:
+                    response = (
+                        "Avant cette lecture, je ne trouve pas "
+                        "dans ma mémoire de connaissance "
+                        "suffisamment précise pour répondre "
+                        "sans fabriquer une compréhension que "
+                        "je n’ai pas encore. Je garde donc "
+                        "la question ouverte."
+                    )
+                else:
+                    response = self._compose_response(
+                        message,
+                        hits,
+                        len(records),
+                    )
 
         timestamp = temporal_context["now"]["utc"]
 
@@ -981,6 +1156,36 @@ class EliotJr:
         if memory_usage is not None:
             result["memory_usage"] = memory_usage
 
+        if faculty_registry is not None:
+            result["faculty_orientation"] = {
+                "orientation_status": faculty_registry.get(
+                    "orientation_status"
+                ),
+                "status_counts": faculty_registry.get(
+                    "status_counts"
+                ),
+                "faculties": [
+                    {
+                        "faculty_id": faculty.get(
+                            "faculty_id"
+                        ),
+                        "name": faculty.get("name"),
+                        "status": faculty.get("status"),
+                    }
+                    for faculty in faculty_registry.get(
+                        "faculties",
+                        [],
+                    )
+                    if isinstance(faculty, dict)
+                ],
+                "consciousness_claimed": (
+                    faculty_registry.get(
+                        "consciousness_claimed"
+                    )
+                ),
+            }
+
+
         if errors:
             result["memory_warnings"] = errors
 
@@ -990,6 +1195,9 @@ class EliotJr:
             "response": response,
             "sources": result["sources"],
             "retrieval_mode": result["retrieval_mode"],
+            "faculty_orientation_used": (
+                faculty_registry is not None
+            ),
             "temporal_context": {
                 "interaction_number": temporal_context[
                     "interaction_number"
