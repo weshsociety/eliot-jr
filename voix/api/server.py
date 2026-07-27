@@ -14,6 +14,9 @@ if project_root in sys.path:
 sys.path.insert(0, project_root)
 
 from core.eliot_jr import eliot_jr
+from core.synthesis_validator import (
+    SynthesisValidationError,
+)
 from core.reading_status import ReadingStatusError, build_reading_status
 
 app = Flask(__name__)
@@ -148,7 +151,25 @@ def dialogue():
     if not message:
         return jsonify({"error": "Le champ 'message' est requis."}), 400
 
-    return jsonify(eliot_jr.think(message))
+    try:
+        result = eliot_jr.think(message)
+    except SynthesisValidationError as error:
+        return jsonify({
+            "error": (
+                "Réponse refusée par le "
+                "validateur de synthèse."
+            ),
+            "error_type": (
+                "synthesis_validation_failed"
+            ),
+            "detail": str(error),
+            "journal_written": False,
+            "fragment_usage_recorded": False,
+            "temporal_state_committed": False,
+            "external_action_performed": False,
+        }), 422
+
+    return jsonify(result)
 
 
 @app.route('/api/reading/status', methods=['GET'])

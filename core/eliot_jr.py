@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from core.synthesis_validator import (
+    SynthesisValidationError,
+    validate_dialogue_result,
+)
+
 import json
 import re
 import unicodedata
@@ -1418,15 +1423,19 @@ class EliotJr:
         if not message:
             raise ValueError("Le message ne peut pas être vide.")
 
-        temporal_context, temporal_warnings = observe_interaction_time(
+        interaction_now = datetime.now(
+            timezone.utc
+        )
+
+        temporal_context, _ = observe_interaction_time(
             state_path=self.temporal_state_path,
             journal_path=self.journal_path,
             timezone_name=self.timezone_name,
-            commit=True,
+            now=interaction_now,
+            commit=False,
         )
 
         records, errors = self._load_memory()
-        errors.extend(temporal_warnings)
 
         (
             orientation_response,
@@ -1530,6 +1539,38 @@ class EliotJr:
                         len(records),
                     )
 
+        sources = [
+            {
+                "memory_id": hit["memory_id"],
+                "file": hit["file"],
+                "section": hit["section"],
+                "title": hit["title"],
+                "score": hit["score"],
+            }
+            for hit in hits
+        ]
+
+        synthesis_validation = (
+            validate_dialogue_result(
+                {
+                    "response": response,
+                    "sources": sources,
+                },
+                mode="strict",
+            )
+        )
+
+        temporal_context, temporal_warnings = (
+            observe_interaction_time(
+                state_path=self.temporal_state_path,
+                journal_path=self.journal_path,
+                timezone_name=self.timezone_name,
+                now=interaction_now,
+                commit=True,
+            )
+        )
+        errors.extend(temporal_warnings)
+
         timestamp = temporal_context["now"]["utc"]
 
         memory_usage: dict[str, Any] | None = None
@@ -1557,16 +1598,10 @@ class EliotJr:
             "response": response,
             "timestamp": timestamp,
             "temporal_context": temporal_context,
-            "sources": [
-                {
-                    "memory_id": hit["memory_id"],
-                    "file": hit["file"],
-                    "section": hit["section"],
-                    "title": hit["title"],
-                    "score": hit["score"],
-                }
-                for hit in hits
-            ],
+            "sources": sources,
+            "synthesis_validation": (
+                synthesis_validation
+            ),
             "memory_records": len(records),
             "retrieval_mode": (
                 "strict"
@@ -1809,6 +1844,43 @@ class EliotJr:
             "input": message,
             "response": response,
             "sources": result["sources"],
+            "synthesis_validation": {
+                "validation_status": (
+                    synthesis_validation.get(
+                        "validation_status"
+                    )
+                ),
+                "response_kind": (
+                    synthesis_validation.get(
+                        "response_kind"
+                    )
+                ),
+                "source_count": (
+                    synthesis_validation.get(
+                        "source_count"
+                    )
+                ),
+                "attribution_count": (
+                    synthesis_validation.get(
+                        "attribution_count"
+                    )
+                ),
+                "source_alignment_verified": (
+                    synthesis_validation.get(
+                        "source_alignment_verified"
+                    )
+                ),
+                "footer_verified": (
+                    synthesis_validation.get(
+                        "footer_verified"
+                    )
+                ),
+                "validation_sha256": (
+                    synthesis_validation.get(
+                        "validation_sha256"
+                    )
+                ),
+            },
             "retrieval_mode": result["retrieval_mode"],
             "faculty_orientation_used": (
                 faculty_registry is not None
