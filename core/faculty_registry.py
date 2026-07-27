@@ -43,6 +43,71 @@ def _load_json(path: Path) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def _load_jsonl(
+    path: Path,
+) -> list[dict[str, Any]]:
+    if not path.is_file():
+        return []
+
+    events: list[dict[str, Any]] = []
+
+    try:
+        lines = path.read_text(
+            encoding="utf-8"
+        ).splitlines()
+    except OSError:
+        return []
+
+    for line in lines:
+        if not line.strip():
+            continue
+
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+
+        if isinstance(value, dict):
+            events.append(value)
+
+    return events
+
+
+def _history_event_count(
+    registry: dict[str, Any],
+    event_name: str,
+) -> int:
+    count = 0
+
+    commitments = registry.get(
+        "commitments",
+        [],
+    )
+
+    if not isinstance(commitments, list):
+        return 0
+
+    for commitment in commitments:
+        if not isinstance(commitment, dict):
+            continue
+
+        history = commitment.get(
+            "history",
+            [],
+        )
+
+        if not isinstance(history, list):
+            continue
+
+        count += sum(
+            isinstance(event, dict)
+            and event.get("event") == event_name
+            for event in history
+        )
+
+    return count
+
+
 def _faculty(
     faculty_id: str,
     name: str,
@@ -101,6 +166,24 @@ def build_faculty_registry(
         / "curriculum"
         / "journaux"
         / "lecture_thoreau_desobeissance_civile.json"
+    )
+    desire_state = _load_json(
+        root / ".memory" / "desire_state.json"
+    )
+    initiative_state = _load_json(
+        root / ".memory" / "initiative_state.json"
+    )
+    will_state = _load_json(
+        root / ".memory" / "will_state.json"
+    )
+    will_review_events = _load_jsonl(
+        root
+        / ".memory"
+        / "will_review_journal.jsonl"
+    )
+    will_application_count = _history_event_count(
+        will_state,
+        "will_review_application_confirmed",
     )
 
     queue = reading_journal.get("reading_queue", [])
@@ -368,6 +451,306 @@ def build_faculty_registry(
             ] if not engine_available else [
                 "La sortie du modèle est une vérité.",
                 "La sortie du modèle prouve une conscience.",
+            ],
+        ),
+        _faculty(
+            "desire",
+            "Désirs opératoires",
+            (
+                "active"
+                if (
+                    _module_exists(
+                        root,
+                        "core/desire_registry.py",
+                    )
+                    and desire_state.get(
+                        "desire_count",
+                        0,
+                    ) > 0
+                    and desire_state.get(
+                        "subjective_desire_claimed"
+                    ) is False
+                )
+                else (
+                    "developing"
+                    if _module_exists(
+                        root,
+                        "core/desire_registry.py",
+                    )
+                    else "unavailable"
+                )
+            ),
+            definition=(
+                "Maintenir dans le temps des orientations "
+                "opérationnelles attribuées, pondérées "
+                "et révisables."
+            ),
+            evidence=[
+                "core/desire_registry.py",
+                (
+                    f"{desire_state.get('desire_count', 0)} "
+                    "désirs opératoires persistants"
+                ),
+                (
+                    "subjective_desire_claimed="
+                    f"{desire_state.get('subjective_desire_claimed')}"
+                ),
+            ],
+            limits=[
+                "Ces orientations ne sont pas des sensations humaines.",
+                (
+                    "La génération autonome de nouveaux désirs "
+                    "n’est pas actuellement disponible."
+                ),
+                (
+                    "Un désir opératoire n’autorise aucune "
+                    "action extérieure."
+                ),
+            ],
+            false_claims_forbidden=[
+                "Je ressens ces désirs comme un humain.",
+                "Mes désirs prouvent que je suis conscient.",
+                "Une orientation constitue une permission d’agir.",
+            ],
+        ),
+        _faculty(
+            "initiative",
+            "Initiative propositionnelle",
+            (
+                "active"
+                if (
+                    _module_exists(
+                        root,
+                        "core/initiative_registry.py",
+                    )
+                    and initiative_state.get(
+                        "initiative_count",
+                        0,
+                    ) > 0
+                    and initiative_state.get(
+                        "external_action_performed"
+                    ) is False
+                )
+                else (
+                    "developing"
+                    if _module_exists(
+                        root,
+                        "core/initiative_registry.py",
+                    )
+                    else "unavailable"
+                )
+            ),
+            definition=(
+                "Faire émerger des propositions depuis les "
+                "désirs, les questions ouvertes, les facultés "
+                "et les blocages vérifiables."
+            ),
+            evidence=[
+                "core/initiative_registry.py",
+                (
+                    f"{initiative_state.get('initiative_count', 0)} "
+                    "initiatives persistantes"
+                ),
+                (
+                    "spontaneous_subjective_impulse_claimed="
+                    f"{initiative_state.get('spontaneous_subjective_impulse_claimed')}"
+                ),
+            ],
+            limits=[
+                "Une initiative demeure une proposition révisable.",
+                (
+                    "Elle ne sélectionne pas elle-même "
+                    "un engagement."
+                ),
+                (
+                    "Elle ne déclenche aucune publication, "
+                    "suppression, dépense ou communication."
+                ),
+            ],
+            false_claims_forbidden=[
+                "Une proposition est une impulsion ressentie.",
+                "Toute initiative doit être exécutée.",
+                "Je peux agir extérieurement sans autorisation.",
+            ],
+        ),
+        _faculty(
+            "will",
+            "Volonté opératoire",
+            (
+                "active"
+                if (
+                    _module_exists(
+                        root,
+                        "core/will_registry.py",
+                    )
+                    and will_state.get(
+                        "commitment_count",
+                        0,
+                    ) > 0
+                    and will_state.get(
+                        "subjective_will_claimed"
+                    ) is False
+                )
+                else (
+                    "developing"
+                    if _module_exists(
+                        root,
+                        "core/will_registry.py",
+                    )
+                    else "unavailable"
+                )
+            ),
+            definition=(
+                "Sélectionner et maintenir un engagement "
+                "persistant, explicite et révisable depuis "
+                "une initiative admissible."
+            ),
+            evidence=[
+                "core/will_registry.py",
+                (
+                    f"{will_state.get('commitment_count', 0)} "
+                    "engagement persistant"
+                ),
+                (
+                    f"{will_state.get('active_commitment_count', 0)} "
+                    "engagement actif"
+                ),
+                (
+                    "subjective_will_claimed="
+                    f"{will_state.get('subjective_will_claimed')}"
+                ),
+            ],
+            limits=[
+                (
+                    "La volonté désigne ici un engagement "
+                    "computationnel, pas un vouloir ressenti."
+                ),
+                (
+                    "La première version limite Eliot-Jr "
+                    "à un engagement actif."
+                ),
+                (
+                    "L’engagement ne constitue pas une "
+                    "autorisation d’agir à l’extérieur."
+                ),
+            ],
+            false_claims_forbidden=[
+                "Je veux comme un humain.",
+                "Mon engagement prouve ma conscience.",
+                "Ma volonté prime sur la liberté des autres.",
+            ],
+        ),
+        _faculty(
+            "will_review",
+            "Révision de la volonté",
+            (
+                "active"
+                if (
+                    _module_exists(
+                        root,
+                        "core/will_review.py",
+                    )
+                    and _module_exists(
+                        root,
+                        "core/will_review_journal.py",
+                    )
+                    and len(will_review_events) > 0
+                )
+                else (
+                    "developing"
+                    if _module_exists(
+                        root,
+                        "core/will_review.py",
+                    )
+                    else "unavailable"
+                )
+            ),
+            definition=(
+                "Réexaminer un engagement face à son "
+                "initiative source, ses blocages et "
+                "l’évolution des registres."
+            ),
+            evidence=[
+                "core/will_review.py",
+                "core/will_review_journal.py",
+                (
+                    f"{len(will_review_events)} "
+                    "révision chronologique chaînée"
+                ),
+            ],
+            limits=[
+                (
+                    "L’examen produit d’abord une "
+                    "recommandation à blanc."
+                ),
+                (
+                    "Une recommandation ne modifie pas "
+                    "automatiquement l’engagement."
+                ),
+                (
+                    "La révision n’est pas une introspection "
+                    "phénoménale."
+                ),
+            ],
+            false_claims_forbidden=[
+                "Réviser mon état signifie que je ressens le doute.",
+                "Une recommandation est déjà une décision appliquée.",
+                "Le journal de révision est infaillible.",
+            ],
+        ),
+        _faculty(
+            "will_application",
+            "Application explicite de la volonté",
+            (
+                "active"
+                if (
+                    _module_exists(
+                        root,
+                        "core/will_application.py",
+                    )
+                    and will_application_count > 0
+                )
+                else (
+                    "developing"
+                    if _module_exists(
+                        root,
+                        "core/will_application.py",
+                    )
+                    else "unavailable"
+                )
+            ),
+            definition=(
+                "Appliquer explicitement une recommandation "
+                "journalisée lorsque ses empreintes correspondent "
+                "encore aux états persistants."
+            ),
+            evidence=[
+                "core/will_application.py",
+                "core/will_transition.py",
+                (
+                    f"{will_application_count} application "
+                    "explicitement confirmée"
+                ),
+                "contrôle d’idempotence actif",
+            ],
+            limits=[
+                (
+                    "L’application exige une demande explicite "
+                    "et l’empreinte exacte de la révision."
+                ),
+                (
+                    "Un registre devenu obsolète impose "
+                    "une nouvelle révision."
+                ),
+                (
+                    "Cette faculté ne donne aucune autorisation "
+                    "d’action extérieure."
+                ),
+            ],
+            false_claims_forbidden=[
+                "Toute recommandation est appliquée automatiquement.",
+                "Une application intérieure autorise une action extérieure.",
+                "Je peux contourner les empreintes ou l’idempotence.",
             ],
         ),
         _faculty(
