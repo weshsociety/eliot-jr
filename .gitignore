@@ -32,3 +32,6 @@ curriculum/journaux/*.lock
 .memory/will_state.json
 .memory/will_state.json.lock
 .memory/will_state.json.tmp
+.memory/will_review_journal.jsonl
+.memory/will_review_journal.jsonl.lock
+.memory/will_review_journal.jsonl.tmp
