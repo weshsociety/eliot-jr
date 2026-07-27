@@ -25,6 +25,9 @@ from core.initiative_registry import (
     InitiativeRegistryError,
     load_initiative_registry,
 )
+from core.will_dialogue import (
+    will_orientation_response,
+)
 from core.temporal_context import observe_interaction_time
 
 
@@ -876,6 +879,25 @@ class EliotJr:
             normalised,
         ).strip()
 
+    def _will_orientation_response(
+        self,
+        message: str,
+    ) -> tuple[
+        str | None,
+        dict[str, Any] | None,
+        list[str],
+    ]:
+        registry_path = (
+            Path(__file__).resolve().parents[1]
+            / ".memory"
+            / "will_state.json"
+        )
+
+        return will_orientation_response(
+            message,
+            registry_path,
+        )
+
     def _initiative_orientation_response(
         self,
         message: str,
@@ -1360,6 +1382,14 @@ class EliotJr:
         ) = self._faculty_orientation_response(message)
 
         (
+            will_response,
+            will_registry,
+            will_warnings,
+        ) = self._will_orientation_response(
+            message
+        )
+
+        (
             initiative_response,
             initiative_registry,
             initiative_warnings,
@@ -1374,12 +1404,16 @@ class EliotJr:
         ) = self._desire_orientation_response(message)
 
         errors.extend(faculty_warnings)
+        errors.extend(will_warnings)
         errors.extend(initiative_warnings)
         errors.extend(desire_warnings)
 
         if orientation_response is not None:
             hits = []
             response = orientation_response
+        elif will_response is not None:
+            hits = []
+            response = will_response
         elif initiative_response is not None:
             hits = []
             response = initiative_response
@@ -1496,6 +1530,82 @@ class EliotJr:
                 ),
             }
 
+
+        if will_registry is not None:
+            commitments = will_registry.get(
+                "commitments",
+                [],
+            )
+
+            result["will_orientation"] = {
+                "commitment_count": (
+                    will_registry.get(
+                        "commitment_count"
+                    )
+                ),
+                "active_commitment_count": (
+                    will_registry.get(
+                        "active_commitment_count"
+                    )
+                ),
+                "subjective_will_claimed": (
+                    will_registry.get(
+                        "subjective_will_claimed"
+                    )
+                ),
+                "external_action_authorized": (
+                    will_registry.get(
+                        "external_action_authorized"
+                    )
+                ),
+                "external_action_performed": (
+                    will_registry.get(
+                        "external_action_performed"
+                    )
+                ),
+                "human_authorization_required_for_external_action": (
+                    will_registry.get(
+                        "selection_policy",
+                        {},
+                    ).get(
+                        "human_authorization_required_for_external_action"
+                    )
+                ),
+                "commitments": [
+                    {
+                        "commitment_id": commitment.get(
+                            "commitment_id"
+                        ),
+                        "title": commitment.get(
+                            "title"
+                        ),
+                        "status": commitment.get(
+                            "status"
+                        ),
+                        "selected_at_utc": commitment.get(
+                            "selected_at_utc"
+                        ),
+                        "source_initiative_id": (
+                            commitment.get(
+                                "source_initiative",
+                                {},
+                            ).get(
+                                "initiative_id"
+                            )
+                        ),
+                        "next_internal_step": (
+                            commitment.get(
+                                "next_internal_step"
+                            )
+                        ),
+                        "revisable": commitment.get(
+                            "revisable"
+                        ),
+                    }
+                    for commitment in commitments
+                    if isinstance(commitment, dict)
+                ],
+            }
 
         if initiative_registry is not None:
             initiatives = initiative_registry.get(
@@ -1617,6 +1727,9 @@ class EliotJr:
             ),
             "initiative_orientation_used": (
                 initiative_registry is not None
+            ),
+            "will_orientation_used": (
+                will_registry is not None
             ),
             "temporal_context": {
                 "interaction_number": temporal_context[
