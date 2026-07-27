@@ -28,6 +28,10 @@ from core.initiative_registry import (
 from core.will_dialogue import (
     will_orientation_response,
 )
+from core.will_review_dialogue import (
+    structured_review_orientation,
+    will_review_orientation_response,
+)
 from core.temporal_context import observe_interaction_time
 
 
@@ -879,6 +883,25 @@ class EliotJr:
             normalised,
         ).strip()
 
+    def _will_review_orientation_response(
+        self,
+        message: str,
+    ) -> tuple[
+        str | None,
+        dict[str, Any] | None,
+        list[str],
+    ]:
+        journal_path = (
+            Path(__file__).resolve().parents[1]
+            / ".memory"
+            / "will_review_journal.jsonl"
+        )
+
+        return will_review_orientation_response(
+            message,
+            journal_path,
+        )
+
     def _will_orientation_response(
         self,
         message: str,
@@ -1382,6 +1405,14 @@ class EliotJr:
         ) = self._faculty_orientation_response(message)
 
         (
+            will_review_response,
+            will_review_journal,
+            will_review_warnings,
+        ) = self._will_review_orientation_response(
+            message
+        )
+
+        (
             will_response,
             will_registry,
             will_warnings,
@@ -1404,6 +1435,7 @@ class EliotJr:
         ) = self._desire_orientation_response(message)
 
         errors.extend(faculty_warnings)
+        errors.extend(will_review_warnings)
         errors.extend(will_warnings)
         errors.extend(initiative_warnings)
         errors.extend(desire_warnings)
@@ -1411,6 +1443,9 @@ class EliotJr:
         if orientation_response is not None:
             hits = []
             response = orientation_response
+        elif will_review_response is not None:
+            hits = []
+            response = will_review_response
         elif will_response is not None:
             hits = []
             response = will_response
@@ -1530,6 +1565,13 @@ class EliotJr:
                 ),
             }
 
+
+        if will_review_journal is not None:
+            result["will_review_orientation"] = (
+                structured_review_orientation(
+                    will_review_journal
+                )
+            )
 
         if will_registry is not None:
             commitments = will_registry.get(
@@ -1730,6 +1772,9 @@ class EliotJr:
             ),
             "will_orientation_used": (
                 will_registry is not None
+            ),
+            "will_review_orientation_used": (
+                will_review_journal is not None
             ),
             "temporal_context": {
                 "interaction_number": temporal_context[
