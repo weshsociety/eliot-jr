@@ -32,6 +32,10 @@ from core.will_review_dialogue import (
     structured_review_orientation,
     will_review_orientation_response,
 )
+from core.open_question_dialogue import (
+    open_question_orientation_response,
+    structured_open_question_orientation,
+)
 from core.temporal_context import observe_interaction_time
 
 
@@ -883,6 +887,32 @@ class EliotJr:
             normalised,
         ).strip()
 
+    def _open_question_orientation_response(
+        self,
+        message: str,
+    ) -> tuple[
+        str | None,
+        dict[str, Any] | None,
+        list[str],
+    ]:
+        """
+        Consulte les questions explicitement conservées
+        comme ouvertes.
+
+        Cette consultation ne relance pas l’extracteur,
+        ne modifie aucun statut et ne démarre aucune enquête.
+        """
+        registry_path = (
+            self.root
+            / ".memory"
+            / "open_question_state.json"
+        )
+
+        return open_question_orientation_response(
+            message,
+            registry_path,
+        )
+
     def _will_review_orientation_response(
         self,
         message: str,
@@ -1405,6 +1435,14 @@ class EliotJr:
         ) = self._faculty_orientation_response(message)
 
         (
+            open_question_response,
+            open_question_registry,
+            open_question_warnings,
+        ) = self._open_question_orientation_response(
+            message
+        )
+
+        (
             will_review_response,
             will_review_journal,
             will_review_warnings,
@@ -1435,6 +1473,7 @@ class EliotJr:
         ) = self._desire_orientation_response(message)
 
         errors.extend(faculty_warnings)
+        errors.extend(open_question_warnings)
         errors.extend(will_review_warnings)
         errors.extend(will_warnings)
         errors.extend(initiative_warnings)
@@ -1443,6 +1482,9 @@ class EliotJr:
         if orientation_response is not None:
             hits = []
             response = orientation_response
+        elif open_question_response is not None:
+            hits = []
+            response = open_question_response
         elif will_review_response is not None:
             hits = []
             response = will_review_response
@@ -1565,6 +1607,13 @@ class EliotJr:
                 ),
             }
 
+
+        if open_question_registry is not None:
+            result["open_question_orientation"] = (
+                structured_open_question_orientation(
+                    open_question_registry
+                )
+            )
 
         if will_review_journal is not None:
             result["will_review_orientation"] = (
@@ -1763,6 +1812,9 @@ class EliotJr:
             "retrieval_mode": result["retrieval_mode"],
             "faculty_orientation_used": (
                 faculty_registry is not None
+            ),
+            "open_question_orientation_used": (
+                open_question_registry is not None
             ),
             "desire_orientation_used": (
                 desire_registry is not None
