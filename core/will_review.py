@@ -8,6 +8,11 @@ from core.initiative_registry import (
     InitiativeRegistryError,
     load_initiative_registry,
 )
+from core.open_question_completion import (
+    OpenQuestionCompletionError,
+    TARGET_INITIATIVE_ID,
+    evaluate_open_question_completion,
+)
 from core.will_registry import (
     WillRegistryError,
     load_will_registry,
@@ -58,6 +63,7 @@ def _review_commitment(
     commitment: dict[str, Any],
     initiative: dict[str, Any] | None,
     *,
+    project_root: Path,
     initiative_registry_sha256: str,
     reviewed_at_utc: str,
 ) -> dict[str, Any]:
@@ -120,6 +126,70 @@ def _review_commitment(
     if not isinstance(blockers, list):
         blockers = ["invalid_blocker_structure"]
 
+    completion_evaluation: dict[str, Any] = {
+        "applicable": (
+            initiative_id
+            == TARGET_INITIATIVE_ID
+        ),
+        "completion_ready": False,
+    }
+
+    if completion_evaluation["applicable"]:
+        try:
+            completion_report = (
+                evaluate_open_question_completion(
+                    project_root,
+                    initiative,
+                )
+            )
+        except OpenQuestionCompletionError as error:
+            completion_evaluation.update({
+                "error": str(error),
+                "criteria_count": None,
+                "criteria_met_count": None,
+                "report_sha256": None,
+                "mutation_applied": False,
+                "external_action_performed": False,
+            })
+        else:
+            completion_evaluation.update({
+                "completion_ready": (
+                    completion_report[
+                        "completion_ready"
+                    ]
+                ),
+                "criteria_count": (
+                    completion_report[
+                        "criteria_count"
+                    ]
+                ),
+                "criteria_met_count": (
+                    completion_report[
+                        "criteria_met_count"
+                    ]
+                ),
+                "report_sha256": (
+                    completion_report[
+                        "report_sha256"
+                    ]
+                ),
+                "question_count": (
+                    completion_report[
+                        "question_count"
+                    ]
+                ),
+                "mutation_applied": (
+                    completion_report[
+                        "mutation_applied"
+                    ]
+                ),
+                "external_action_performed": (
+                    completion_report[
+                        "external_action_performed"
+                    ]
+                ),
+            })
+
     previous_status = source.get("status_at_selection")
     previous_scope = source.get("scope")
     previous_priority = source.get("priority_score")
@@ -174,6 +244,17 @@ def _review_commitment(
             "n’est plus explicitement fermée."
         )
 
+    elif completion_evaluation.get(
+        "completion_ready"
+    ) is True:
+        recommendation = "complete"
+        reasons.append(
+            "Les critères matériels dérivés de la proposition "
+            "sont tous satisfaits : l’extracteur strict, le "
+            "registre daté, les preuves et la frontière de "
+            "non-fabrication sont vérifiés."
+        )
+
     elif current_status in {
         "candidate",
         "proposed",
@@ -190,6 +271,13 @@ def _review_commitment(
                 "Le registre des initiatives a changé ; "
                 "l’engagement reste maintenable, mais cette "
                 "évolution doit demeurer visible."
+            )
+
+        if completion_evaluation.get("error"):
+            reasons.append(
+                "L’évaluation matérielle de complétion "
+                "est indisponible ; l’engagement reste "
+                "maintenu sans conclusion fabriquée."
             )
 
     else:
@@ -210,6 +298,7 @@ def _review_commitment(
         "source_blockers": blockers,
         "source_registry_changed": registry_changed,
         "drift": drift,
+        "completion_evaluation": completion_evaluation,
         "recommendation": recommendation,
         "reasons": reasons,
         "reviewed_at_utc": reviewed_at_utc,
@@ -271,6 +360,7 @@ def review_will_state(
                 )
                 else None
             ),
+            project_root=root,
             initiative_registry_sha256=(
                 initiative_registry["registry_sha256"]
             ),
