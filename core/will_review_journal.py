@@ -49,10 +49,50 @@ def _require_string(
     return value.strip()
 
 
+def _completion_snapshot(
+    review: dict[str, Any],
+) -> dict[str, Any] | None:
+    evaluation = review.get(
+        "completion_evaluation"
+    )
+
+    if evaluation is None:
+        return None
+
+    if not isinstance(evaluation, dict):
+        raise WillReviewJournalError(
+            "L’évaluation matérielle doit être un objet."
+        )
+
+    return {
+        "applicable": evaluation.get(
+            "applicable"
+        ),
+        "completion_ready": evaluation.get(
+            "completion_ready"
+        ),
+        "criteria_count": evaluation.get(
+            "criteria_count"
+        ),
+        "criteria_met_count": evaluation.get(
+            "criteria_met_count"
+        ),
+        "question_count": evaluation.get(
+            "question_count"
+        ),
+        "report_sha256": evaluation.get(
+            "report_sha256"
+        ),
+        "error": evaluation.get("error"),
+        "mutation_applied": False,
+        "external_action_performed": False,
+    }
+
+
 def _review_snapshot(
     review: dict[str, Any],
 ) -> dict[str, Any]:
-    return {
+    snapshot = {
         "commitment_id": review.get(
             "commitment_id"
         ),
@@ -93,6 +133,17 @@ def _review_snapshot(
         "external_action_performed": False,
         "subjective_will_claimed": False,
     }
+
+    completion = _completion_snapshot(
+        review
+    )
+
+    if completion is not None:
+        snapshot[
+            "completion_evaluation"
+        ] = completion
+
+    return snapshot
 
 
 def build_review_event(
@@ -163,6 +214,140 @@ def build_review_event(
     )
 
     return validate_review_event(event)
+
+
+def _validate_completion_evaluation(
+    evaluation: Any,
+) -> dict[str, Any]:
+    if not isinstance(evaluation, dict):
+        raise WillReviewJournalError(
+            "L’évaluation matérielle journalisée "
+            "doit être un objet."
+        )
+
+    applicable = evaluation.get(
+        "applicable"
+    )
+    completion_ready = evaluation.get(
+        "completion_ready"
+    )
+
+    if applicable not in {True, False}:
+        raise WillReviewJournalError(
+            "Le caractère applicable de l’évaluation "
+            "est invalide."
+        )
+
+    if completion_ready not in {
+        True,
+        False,
+    }:
+        raise WillReviewJournalError(
+            "Le verdict matériel est invalide."
+        )
+
+    if evaluation.get(
+        "mutation_applied"
+    ) is not False:
+        raise WillReviewJournalError(
+            "L’évaluation matérielle déclare une mutation."
+        )
+
+    if evaluation.get(
+        "external_action_performed"
+    ) is not False:
+        raise WillReviewJournalError(
+            "L’évaluation matérielle déclare "
+            "une action extérieure."
+        )
+
+    criteria_count = evaluation.get(
+        "criteria_count"
+    )
+    criteria_met_count = evaluation.get(
+        "criteria_met_count"
+    )
+
+    for field_name, value in (
+        ("criteria_count", criteria_count),
+        (
+            "criteria_met_count",
+            criteria_met_count,
+        ),
+    ):
+        if value is not None and (
+            not isinstance(value, int)
+            or isinstance(value, bool)
+            or value < 0
+        ):
+            raise WillReviewJournalError(
+                "Compteur matériel invalide : "
+                f"{field_name}."
+            )
+
+    if (
+        isinstance(criteria_count, int)
+        and isinstance(
+            criteria_met_count,
+            int,
+        )
+        and criteria_met_count
+        > criteria_count
+    ):
+        raise WillReviewJournalError(
+            "Le nombre de critères satisfaits "
+            "dépasse le total."
+        )
+
+    question_count = evaluation.get(
+        "question_count"
+    )
+
+    if question_count is not None and (
+        not isinstance(question_count, int)
+        or isinstance(question_count, bool)
+        or question_count < 0
+    ):
+        raise WillReviewJournalError(
+            "Le nombre de questions est invalide."
+        )
+
+    error = evaluation.get("error")
+
+    if error is not None:
+        _require_string(
+            error,
+            "completion_evaluation.error",
+        )
+
+    if completion_ready is True:
+        if applicable is not True:
+            raise WillReviewJournalError(
+                "Une complétion prête doit être applicable."
+            )
+
+        if (
+            not isinstance(criteria_count, int)
+            or criteria_count < 1
+            or criteria_met_count
+            != criteria_count
+        ):
+            raise WillReviewJournalError(
+                "Les critères ne justifient pas "
+                "la complétion annoncée."
+            )
+
+        _require_string(
+            evaluation.get(
+                "report_sha256"
+            ),
+            (
+                "completion_evaluation."
+                "report_sha256"
+            ),
+        )
+
+    return evaluation
 
 
 def validate_review_event(
@@ -273,6 +458,13 @@ def validate_review_event(
         ) is not False:
             raise WillReviewJournalError(
                 "Un examen revendique une volonté subjective."
+            )
+
+        if "completion_evaluation" in review:
+            _validate_completion_evaluation(
+                review[
+                    "completion_evaluation"
+                ]
             )
 
     expected_hash = _require_string(
