@@ -35,3 +35,6 @@ curriculum/journaux/*.lock
 .memory/will_review_journal.jsonl
 .memory/will_review_journal.jsonl.lock
 .memory/will_review_journal.jsonl.tmp
+.memory/open_question_state.json
+.memory/open_question_state.json.lock
+.memory/open_question_state.json.tmp
