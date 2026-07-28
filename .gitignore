@@ -41,3 +41,6 @@ curriculum/journaux/*.lock
 
 # Candidates de lecture vivantes
 .memory/reading_candidates/
+
+# Sauvegardes locales vérifiées
+.backups/
