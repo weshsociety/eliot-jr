@@ -38,3 +38,6 @@ curriculum/journaux/*.lock
 .memory/open_question_state.json
 .memory/open_question_state.json.lock
 .memory/open_question_state.json.tmp
+
+# Candidates de lecture vivantes
+.memory/reading_candidates/
