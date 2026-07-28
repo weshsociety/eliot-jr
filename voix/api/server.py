@@ -30,6 +30,12 @@ READING_JOURNAL_PATH = (
     / "lecture_thoreau_desobeissance_civile.json"
 )
 
+READING_CANDIDATES_ROOT = (
+    PROJECT_ROOT
+    / ".memory"
+    / "reading_candidates"
+)
+
 def load_json(path, default):
     if path.exists():
         with open(path) as f:
@@ -178,6 +184,7 @@ def reading_status():
         status_value = build_reading_status(
             READING_JOURNAL_PATH,
             engine_available=False,
+            candidates_root=READING_CANDIDATES_ROOT,
         )
     except ReadingStatusError:
         return jsonify({
