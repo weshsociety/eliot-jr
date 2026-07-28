@@ -1,0 +1,13 @@
+[Unit]
+Description=Eliot-Jr - Planification des sauvegardes de lecture
+
+[Timer]
+OnActiveSec=6h
+OnUnitActiveSec=6h
+AccuracySec=5min
+RandomizedDelaySec=10min
+Persistent=true
+Unit=eliot-reading-backup.service
+
+[Install]
+WantedBy=timers.target

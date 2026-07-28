@@ -1,0 +1,15 @@
+[Unit]
+Description=Eliot-Jr - Sauvegarde vérifiée des états de lecture
+After=eliot-jr.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/eliot-jr
+ExecStart=/home/eliot-jr/.venv/bin/python /home/eliot-jr/gardien/backup_reading_state.py
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+RestrictSUIDSGID=true
+LockPersonality=true
