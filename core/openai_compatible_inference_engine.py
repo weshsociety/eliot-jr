@@ -319,8 +319,58 @@ class OpenAICompatibleInferenceEngine:
                 },
                 json={
                     "model": self.model_id,
-                    "temperature": 0.2,
                     "messages": messages,
+                    "response_format": {
+                        "type": "json_schema",
+                        "json_schema": {
+                            "name": (
+                                "reading_reflection"
+                            ),
+                            "strict": True,
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "passage_sha256": {
+                                        "type": "string",
+                                    },
+                                    "what_passage_says": {
+                                        "type": "string",
+                                    },
+                                    "provisional_understanding": {
+                                        "type": "string",
+                                    },
+                                    "questions_or_objections": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                        },
+                                        "minItems": 1,
+                                    },
+                                    "limits": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                        },
+                                        "minItems": 1,
+                                    },
+                                },
+                                "required": [
+                                    "passage_sha256",
+                                    "what_passage_says",
+                                    (
+                                        "provisional_"
+                                        "understanding"
+                                    ),
+                                    (
+                                        "questions_or_"
+                                        "objections"
+                                    ),
+                                    "limits",
+                                ],
+                                "additionalProperties": False,
+                            },
+                        },
+                    },
                 },
                 timeout=self.timeout_seconds,
             )
