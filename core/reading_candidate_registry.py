@@ -21,6 +21,28 @@ from core.reading_journal import (
 class ReadingCandidateError(ValueError):
     pass
 
+LEGACY_EXTERNAL_READING_WRITES_ENABLED = False
+
+LEGACY_EXTERNAL_READING_FREEZE_REASON = (
+    "Le registre historique des candidates LLM est gelé. "
+    "Les candidates existantes restent vérifiables et "
+    "migrables, mais aucune nouvelle candidate, revue "
+    "obligatoire ou application historique ne peut être écrite."
+)
+
+
+def _require_legacy_external_reading_write(
+    operation: str,
+) -> None:
+    if LEGACY_EXTERNAL_READING_WRITES_ENABLED:
+        return
+
+    raise ReadingCandidateError(
+        f"{LEGACY_EXTERNAL_READING_FREEZE_REASON} "
+        f"Opération refusée : {operation}."
+    )
+
+
 
 ACCEPTED_DECISIONS = {
     "accepted",
@@ -280,6 +302,10 @@ def create_candidate(
     Path,
     dict[str, Any],
 ]:
+    _require_legacy_external_reading_write(
+        "create_candidate"
+    )
+
     normalized = validate_inference_result(
         request=request,
         result=validated_result,
@@ -416,6 +442,10 @@ def review_candidate(
     explicit_human_confirmation: bool,
     now: datetime | None = None,
 ) -> dict[str, Any]:
+    _require_legacy_external_reading_write(
+        "review_candidate"
+    )
+
     decision = str(decision).strip()
     reviewed_by = str(reviewed_by).strip()
     comment = str(comment).strip()
@@ -622,6 +652,10 @@ def apply_candidate(
     applied_by: str,
     now: datetime | None = None,
 ) -> dict[str, Any]:
+    _require_legacy_external_reading_write(
+        "apply_candidate"
+    )
+
     applied_by = str(applied_by).strip()
 
     if not applied_by:

@@ -17,6 +17,29 @@ JOURNAL_ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_-]{2,100}$")
 class ReadingJournalError(ValueError):
     """Erreur contrôlée du moteur de lecture."""
 
+LEGACY_EXTERNAL_READING_WRITES_ENABLED = False
+
+LEGACY_EXTERNAL_READING_FREEZE_REASON = (
+    "Le pipeline historique d’inférence externe est gelé. "
+    "Les sorties de moteur existantes restent consultables "
+    "comme notes externes, mais ce chemin ne peut plus créer "
+    "de rencontre, de réflexion attribuée à Eliot-Jr ou "
+    "d’état dépendant d’une validation humaine."
+)
+
+
+def _require_legacy_external_reading_write(
+    operation: str,
+) -> None:
+    if LEGACY_EXTERNAL_READING_WRITES_ENABLED:
+        return
+
+    raise ReadingJournalError(
+        f"{LEGACY_EXTERNAL_READING_FREEZE_REASON} "
+        f"Opération refusée : {operation}."
+    )
+
+
 
 def _utc_now(now: datetime | None = None) -> str:
     current = now or datetime.now(timezone.utc)
@@ -692,6 +715,10 @@ def record_validated_inference_result(
     - identifie son moteur et son modèle ;
     - contient une sortie structurée et provisoire.
     """
+    _require_legacy_external_reading_write(
+        "record_validated_inference_result"
+    )
+
     path = _journal_path(journals_root, journal_id)
     timestamp = _utc_now(now)
 
