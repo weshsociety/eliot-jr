@@ -7,7 +7,7 @@ import json
 import re
 
 
-ANALYSIS_SCHEMA_VERSION = 1
+ANALYSIS_SCHEMA_VERSION = 2
 
 TOKEN_PATTERN = re.compile(
     r"[A-Za-z]+(?:[’'][A-Za-z]+)?"
@@ -607,85 +607,75 @@ def _nearest_boundary_right(
     return len(text)
 
 
+CONNECTOR_ONLY_TOKENS = frozenset({
+    "and", "but", "for", "or", "so", "yet",
+})
+
+
+def _is_substantive_evidence(value: str) -> bool:
+    tokens = [m.group(0).casefold() for m in TOKEN_PATTERN.finditer(value)]
+    return len(tokens) >= 2 and not all(token in CONNECTOR_ONLY_TOKENS for token in tokens)
+
+
+def _previous_clause_span(text: str, boundary_start: int) -> tuple[int, int]:
+    index = boundary_start - 1
+    while index >= 0 and (text[index].isspace() or text[index] in "«»“”\"';:,.?!—–"):
+        index -= 1
+    end = index + 1
+    while index >= 0:
+        if text[index] in (CLAUSE_BOUNDARIES | frozenset(".")):
+            break
+        index -= 1
+    return _trim_span(text, index + 1, end)
+
+
+def _relation_marker_allowed(text: str, marker: dict[str, Any]) -> bool:
+    if marker["group"] != "contrast_or_concession" or marker["canonical"] != "but":
+        return True
+    prefix = text[max(0, marker["start"] - 80):marker["start"]].casefold()
+    if re.search(r"\bat\s+best\s*$", prefix):
+        return False
+    clause_start = _nearest_boundary_left(text, marker["start"])
+    clause_prefix = text[clause_start:marker["start"]].casefold()
+    if re.search(r"\bwhat\s+is(?:\s+it)?\s*$", clause_prefix):
+        return False
+    return True
+
+
 def _relation_candidates(
     text: str,
-    markers: list[
-        dict[str, Any]
-    ],
+    markers: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     relations = []
-
     for marker in markers:
-        if marker["group"] not in (
-            RELATION_GROUPS
-        ):
+        if marker["group"] not in RELATION_GROUPS:
             continue
-
-        left_start = (
-            _nearest_boundary_left(
-                text,
-                marker["start"],
-            )
-        )
+        if not _relation_marker_allowed(text, marker):
+            continue
+        left_start = _nearest_boundary_left(text, marker["start"])
         left_end = marker["start"]
         right_start = marker["end"]
-        right_end = (
-            _nearest_boundary_right(
-                text,
-                marker["end"],
-            )
-        )
-
-        left_start, left_end = (
-            _trim_span(
-                text,
-                left_start,
-                left_end,
-            )
-        )
-        right_start, right_end = (
-            _trim_span(
-                text,
-                right_start,
-                right_end,
-            )
-        )
-
+        right_end = _nearest_boundary_right(text, marker["end"])
+        left_start, left_end = _trim_span(text, left_start, left_end)
+        right_start, right_end = _trim_span(text, right_start, right_end)
+        left_text = text[left_start:left_end]
+        right_text = text[right_start:right_end]
+        if not _is_substantive_evidence(left_text):
+            previous_start, previous_end = _previous_clause_span(text, left_start)
+            previous_text = text[previous_start:previous_end]
+            if _is_substantive_evidence(previous_text):
+                left_start, left_end, left_text = previous_start, previous_end, previous_text
+        if not (_is_substantive_evidence(left_text) and _is_substantive_evidence(right_text)):
+            continue
         relations.append({
-            "relation_id": (
-                f"relation_"
-                f"{len(relations) + 1:04d}"
-            ),
-            "relation_type": (
-                marker["group"]
-            ),
-            "status": (
-                "candidate_not_interpreted"
-            ),
-            "basis": (
-                "surface_marker_and_"
-                "adjacent_spans"
-            ),
-            "marker": deepcopy(
-                marker
-            ),
-            "left_evidence": {
-                "start": left_start,
-                "end": left_end,
-                "text": text[
-                    left_start:left_end
-                ],
-            },
-            "right_evidence": {
-                "start": right_start,
-                "end": right_end,
-                "text": text[
-                    right_start:
-                    right_end
-                ],
-            },
+            "relation_id": f"relation_{len(relations)+1:04d}",
+            "relation_type": marker["group"],
+            "status": "candidate_not_interpreted",
+            "basis": "surface_marker_and_substantive_adjacent_spans",
+            "marker": deepcopy(marker),
+            "left_evidence": {"start": left_start, "end": left_end, "text": left_text},
+            "right_evidence": {"start": right_start, "end": right_end, "text": right_text},
         })
-
     return relations
 
 
@@ -820,50 +810,25 @@ def _recurring_terms(
     return recurring
 
 
-def _reference_candidates(
-    occurrences: list[
-        dict[str, Any]
-    ],
+def _reference_form_occurrences(
+    occurrences: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     results = []
-
     for occurrence in occurrences:
-        if (
-            occurrence["normalised"]
-            not in REFERENCE_TOKENS
-        ):
+        if occurrence["normalised"] not in REFERENCE_TOKENS:
             continue
-
         results.append({
-            "ambiguity_id": (
-                f"reference_"
-                f"{len(results) + 1:04d}"
-            ),
-            "kind": (
-                "potential_reference_"
-                "ambiguity"
-            ),
-            "status": (
-                "surface_candidate_only"
-            ),
-            "reason": (
-                "La forme de référence "
-                "nécessite un rattachement "
-                "qui n’est pas résolu par "
-                "l’analyse de surface."
-            ),
+            "reference_id": f"reference_{len(results)+1:04d}",
+            "kind": "reference_form_occurrence",
+            "status": "observed_not_resolved",
+            "ambiguity_claimed": False,
             "evidence": {
-                "start": occurrence[
-                    "start"
-                ],
+                "start": occurrence["start"],
                 "end": occurrence["end"],
                 "text": occurrence["text"],
-                "normalised": occurrence[
-                    "normalised"
-                ],
+                "normalised": occurrence["normalised"],
             },
         })
-
     return results
 
 
@@ -972,11 +937,10 @@ def analyse_logical_surface(
                 markers,
             )
         ),
-        "potential_ambiguities": (
-            _reference_candidates(
-                tokens
-            )
+        "reference_form_occurrences": (
+            _reference_form_occurrences(tokens)
         ),
+        "potential_ambiguities": [],
         "evidence_policy": {
             "all_evidence_uses_character_spans": (
                 True
@@ -984,6 +948,8 @@ def analyse_logical_surface(
             "relations_are_interpreted": False,
             "negation_scopes_are_final": False,
             "references_are_resolved": False,
+            "reference_forms_are_ambiguities": False,
+            "ambiguity_requires_multiple_plausible_referents": True,
         },
         "claims": {
             "journal_modified": False,

@@ -196,14 +196,45 @@ assert (
     is True
 )
 
-assert (
-    len(
-        analyses["passage_0003"][
-            "candidate_relations"
-        ]
-    )
-    >= 1
-)
+expected_relation_counts = {
+    "passage_0001": 1,
+    "passage_0002": 1,
+    "passage_0003": 3,
+    "passage_0004": 1,
+}
+
+expected_reference_counts = {
+    "passage_0001": 12,
+    "passage_0002": 0,
+    "passage_0003": 4,
+    "passage_0004": 5,
+}
+
+for passage_id, expected in expected_relation_counts.items():
+    relations = analyses[passage_id]["candidate_relations"]
+    assert len(relations) == expected
+    for relation in relations:
+        assert relation["left_evidence"]["text"].strip()
+        assert relation["right_evidence"]["text"].strip()
+
+for passage_id, expected in expected_reference_counts.items():
+    analysis = analyses[passage_id]
+    assert len(analysis["reference_form_occurrences"]) == expected
+    assert analysis["potential_ambiguities"] == []
+
+passage_0002_buts = [
+    relation["marker"]["start"]
+    for relation in analyses["passage_0002"]["candidate_relations"]
+    if relation["marker"]["canonical"] == "but"
+]
+assert passage_0002_buts == [42]
+
+passage_0003_buts = [
+    relation["marker"]["start"]
+    for relation in analyses["passage_0003"]["candidate_relations"]
+    if relation["marker"]["canonical"] == "but"
+]
+assert passage_0003_buts == [132]
 
 for analysis in analyses.values():
     serialised = json.dumps(
@@ -287,6 +318,27 @@ print(
         "passage_0004",
         "negation",
     ),
+)
+print(
+    "Relations par passage :",
+    {
+        passage_id: len(analysis["candidate_relations"])
+        for passage_id, analysis in analyses.items()
+    },
+)
+print(
+    "Références observées :",
+    {
+        passage_id: len(analysis["reference_form_occurrences"])
+        for passage_id, analysis in analyses.items()
+    },
+)
+print(
+    "Ambiguïtés produites :",
+    {
+        passage_id: len(analysis["potential_ambiguities"])
+        for passage_id, analysis in analyses.items()
+    },
 )
 print(
     "Contexte interdit refusé :",

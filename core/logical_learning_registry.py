@@ -21,7 +21,7 @@ JOURNAL_ID_PATTERN = re.compile(
     r"^[a-z0-9][a-z0-9_]*$"
 )
 
-LEARNING_SCHEMA_VERSION = 1
+LEARNING_SCHEMA_VERSION = 2
 
 PRODUCER = "eliot_jr_logical_core"
 
@@ -824,58 +824,33 @@ def _questions_from_ambiguities(
     ambiguities: list[Any],
 ) -> list[dict[str, Any]]:
     questions = []
-
     for ambiguity in ambiguities:
-        if not isinstance(
-            ambiguity,
-            dict,
+        if not isinstance(ambiguity, dict):
+            raise LogicalLearningRegistryError("Ambiguïté logique invalide.")
+        plausible = ambiguity.get("plausible_referents")
+        if (
+            ambiguity.get("status") != "demonstrated_multiple_plausible_referents"
+            or not isinstance(plausible, list)
+            or len(plausible) < 2
         ):
-            raise LogicalLearningRegistryError(
-                "Ambiguïté logique invalide."
-            )
-
-        evidence = ambiguity.get(
-            "evidence"
-        )
-
-        if not isinstance(
-            evidence,
-            dict,
-        ):
-            raise LogicalLearningRegistryError(
-                "Preuve d’ambiguïté invalide."
-            )
-
-        surface = str(
-            evidence.get(
-                "text",
-                "",
-            )
-        )
-
+            continue
+        evidence = ambiguity.get("evidence")
+        if not isinstance(evidence, dict):
+            raise LogicalLearningRegistryError("Preuve d’ambiguïté invalide.")
+        surface = str(evidence.get("text", ""))
         questions.append({
-            "question_id": (
-                "question_"
-                f"{len(questions) + 1:04d}"
-            ),
-            "question_kind": (
-                "reference_resolution"
-            ),
+            "question_id": f"question_{len(questions)+1:04d}",
+            "question_kind": "reference_resolution",
             "status": "open",
-            "generated_by_rule": (
-                "reference_question_v1"
-            ),
+            "generated_by_rule": "demonstrated_reference_ambiguity_question_v2",
             "prompt": (
-                "À quel élément du passage "
-                f"la forme « {surface} » "
-                "peut-elle se rattacher ?"
+                "Parmi les rattachements plausibles démontrés, lequel "
+                f"convient à « {surface} » ?"
             ),
-            "evidence": deepcopy(
-                evidence
-            ),
+            "evidence": deepcopy(evidence),
+            "plausible_referents": deepcopy(plausible),
             "answer_required": False,
         })
-
     return questions
 
 
@@ -900,174 +875,88 @@ def _build_learning_state(
     passage_hash: str,
     timestamp: str,
 ) -> dict[str, Any]:
-    terms_block = analysis.get(
-        "term_occurrences"
-    )
-
-    if not isinstance(
-        terms_block,
-        dict,
-    ):
-        raise LogicalLearningRegistryError(
-            "Occurrences de termes invalides."
-        )
-
+    terms_block = analysis.get("term_occurrences")
+    if not isinstance(terms_block, dict):
+        raise LogicalLearningRegistryError("Occurrences de termes invalides.")
     terms = _copy_list(
-        terms_block.get(
-            "recurring_content_terms"
-        ),
-        field=(
-            "term_occurrences."
-            "recurring_content_terms"
-        ),
+        terms_block.get("recurring_content_terms"),
+        field="term_occurrences.recurring_content_terms",
     )
-
     relations = _copy_list(
-        analysis.get(
-            "candidate_relations"
-        ),
+        analysis.get("candidate_relations"),
         field="candidate_relations",
     )
-
+    reference_forms = _copy_list(
+        analysis.get("reference_form_occurrences"),
+        field="reference_form_occurrences",
+    )
     ambiguities = _copy_list(
-        analysis.get(
-            "potential_ambiguities"
-        ),
+        analysis.get("potential_ambiguities"),
         field="potential_ambiguities",
     )
-
-    existing_revisions = (
-        existing_state.get(
-            "revisions",
-            [],
-        )
-    )
-
-    if not isinstance(
-        existing_revisions,
-        list,
-    ):
-        raise LogicalLearningRegistryError(
-            "Historique des révisions "
-            "invalide."
-        )
-
-    revisions = deepcopy(
-        existing_revisions
-    )
-
-    previous_analysis_hash = str(
-        existing_state.get(
-            "analysis_sha256",
-            "",
-        )
-    ).strip()
-
+    existing_revisions = existing_state.get("revisions", [])
+    if not isinstance(existing_revisions, list):
+        raise LogicalLearningRegistryError("Historique des révisions invalide.")
+    revisions = deepcopy(existing_revisions)
+    previous_analysis_hash = str(existing_state.get("analysis_sha256", "")).strip()
     if (
-        existing_state.get("status")
-        == "processed"
+        existing_state.get("status") == "processed"
         and previous_analysis_hash
-        and previous_analysis_hash
-        != analysis_hash
+        and previous_analysis_hash != analysis_hash
     ):
         revisions.append({
-            "revision_number": (
-                len(revisions) + 1
+            "revision_number": len(revisions) + 1,
+            "superseded_at_utc": timestamp,
+            "reason": "deterministic_analysis_changed",
+            "previous_analysis_sha256": previous_analysis_hash,
+            "previous_learning_content_sha256": existing_state.get(
+                "learning_content_sha256"
             ),
-            "superseded_at_utc": (
-                timestamp
+            "previous_learning_state_sha256": existing_state.get(
+                "learning_state_sha256"
             ),
-            "reason": (
-                "deterministic_analysis_"
-                "changed"
-            ),
-            "previous_analysis_sha256": (
-                previous_analysis_hash
-            ),
-            "previous_learning_state_sha256": (
-                existing_state.get(
-                    "learning_state_sha256"
-                )
-            ),
-            "previous_state": (
-                _previous_state_snapshot(
-                    existing_state
-                )
-            ),
+            "previous_state": _previous_state_snapshot(existing_state),
         })
-
-    state: dict[str, Any] = {
-        "schema_version": (
-            LEARNING_SCHEMA_VERSION
-        ),
-        "status": "processed",
+    content: dict[str, Any] = {
+        "schema_version": LEARNING_SCHEMA_VERSION,
         "producer": PRODUCER,
-        "processing_mode": (
-            "deterministic_non_llm"
-        ),
+        "processing_mode": "deterministic_non_llm",
         "llm_used": False,
-        "processed_at_utc": timestamp,
-        "human_approval_required_to_exist": (
-            False
-        ),
+        "human_approval_required_to_exist": False,
         "conclusion_required": False,
         "may_disagree_with_collective": True,
         "may_hold_contradictions": True,
         "may_remain_unresolved": True,
         "passage_id": passage_id,
         "passage_sha256": passage_hash,
-        "context_id": context.get(
-            "context_id"
-        ),
-        "context_sha256": context.get(
-            "context_sha256"
-        ),
+        "context_id": context.get("context_id"),
+        "context_sha256": context.get("context_sha256"),
         "analysis_id": analysis_id,
         "analysis_sha256": analysis_hash,
         "rule_set": {
-            "surface_analyser": (
-                analysis.get("producer")
-            ),
-            "surface_schema_version": (
-                analysis.get(
-                    "schema_version"
-                )
-            ),
-            "learning_registry": (
-                "logical_learning_"
-                "registry_v1"
-            ),
+            "surface_analyser": analysis.get("producer"),
+            "surface_schema_version": analysis.get("schema_version"),
+            "learning_registry": "logical_learning_registry_v2",
         },
-        "source_limits": deepcopy(
-            analysis.get(
-                "source_limits",
-                {},
-            )
-        ),
+        "source_limits": deepcopy(analysis.get("source_limits", {})),
         "terms": terms,
         "relations": relations,
+        "reference_forms": reference_forms,
         "ambiguities": ambiguities,
-        "claims": _inventory_claims(
-            analysis
-        ),
-        "questions": (
-            _questions_from_ambiguities(
-                ambiguities
-            )
-        ),
+        "claims": _inventory_claims(analysis),
+        "questions": _questions_from_ambiguities(ambiguities),
         "hypotheses": [],
         "contradictions": [],
-        "revisions": revisions,
     }
-
-    state_hash = _canonical_hash(
-        state
-    )
-
-    state["learning_state_sha256"] = (
-        state_hash
-    )
-
+    content_hash = _canonical_hash(content)
+    state: dict[str, Any] = {
+        **content,
+        "status": "processed",
+        "processed_at_utc": timestamp,
+        "revisions": revisions,
+        "learning_content_sha256": content_hash,
+    }
+    state["learning_state_sha256"] = _canonical_hash(state)
     return state
 
 
@@ -1077,6 +966,7 @@ def _verify_persisted_update(
     after_journal: dict[str, Any],
     passage_id: str,
     analysis_hash: str,
+    learning_content_hash: str,
     learning_state_hash: str,
 ) -> None:
     before_index = (
@@ -1126,6 +1016,16 @@ def _verify_persisted_update(
         raise LogicalLearningRegistryError(
             "Analyse enregistrée "
             "incorrecte."
+        )
+
+    if (
+        state.get(
+            "learning_content_sha256"
+        )
+        != learning_content_hash
+    ):
+        raise LogicalLearningRegistryError(
+            "Empreinte du contenu logique incorrecte après écriture."
         )
 
     if (
@@ -1346,6 +1246,11 @@ def record_logical_learning(
                 "analysis_sha256": (
                     analysis_hash
                 ),
+                "learning_content_sha256": (
+                    existing_state.get(
+                        "learning_content_sha256"
+                    )
+                ),
                 "learning_state_sha256": (
                     existing_state.get(
                         "learning_state_sha256"
@@ -1390,6 +1295,11 @@ def record_logical_learning(
         updated_queue_item[
             "eliot_learning_analysis_sha256"
         ] = analysis_hash
+        updated_queue_item[
+            "eliot_learning_content_sha256"
+        ] = new_state[
+            "learning_content_sha256"
+        ]
         updated_queue_item[
             "eliot_learning_state_sha256"
         ] = new_state[
@@ -1436,6 +1346,11 @@ def record_logical_learning(
                 "analysis_sha256": (
                     analysis_hash
                 ),
+                "learning_content_sha256": (
+                    new_state[
+                        "learning_content_sha256"
+                    ]
+                ),
                 "learning_state_sha256": (
                     new_state[
                         "learning_state_sha256"
@@ -1458,6 +1373,11 @@ def record_logical_learning(
             ),
             "analysis_id": analysis_id,
             "analysis_sha256": analysis_hash,
+            "learning_content_sha256": (
+                new_state[
+                    "learning_content_sha256"
+                ]
+            ),
             "learning_state_sha256": (
                 new_state[
                     "learning_state_sha256"
@@ -1502,6 +1422,11 @@ def record_logical_learning(
                 after_journal=persisted,
                 passage_id=passage_id,
                 analysis_hash=analysis_hash,
+                learning_content_hash=(
+                    new_state[
+                        "learning_content_sha256"
+                    ]
+                ),
                 learning_state_hash=(
                     new_state[
                         "learning_state_sha256"

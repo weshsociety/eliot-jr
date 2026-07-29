@@ -330,8 +330,11 @@ with tempfile.TemporaryDirectory() as temp:
     )
     assert learning["terms"]
     assert learning["claims"]
-    assert learning["questions"]
+    assert learning["reference_forms"]
+    assert learning["ambiguities"] == []
+    assert learning["questions"] == []
     assert learning["revisions"] == []
+    assert learning["learning_content_sha256"]
     assert POISON not in json.dumps(
         learning,
         ensure_ascii=False,
@@ -500,6 +503,14 @@ with tempfile.TemporaryDirectory() as temp:
     )
     assert (
         previous[
+            "learning_content_sha256"
+        ]
+        == learning[
+            "learning_content_sha256"
+        ]
+    )
+    assert (
+        previous[
             "learning_state_sha256"
         ]
         == learning[
@@ -573,6 +584,62 @@ with tempfile.TemporaryDirectory() as temp:
         ]["status"]
         == "processed"
     )
+
+    later_preview_document, _ = (
+        record_logical_learning(
+            project_root=root,
+            journal_id=JOURNAL_ID,
+            context=preview_context,
+            analysis=preview_analysis,
+            now=datetime(
+                2026,
+                7,
+                29,
+                15,
+                30,
+                tzinfo=timezone.utc,
+            ),
+            commit=False,
+            backup_root=backup_root,
+        )
+    )
+
+    later_preview_encounter = next(
+        item
+        for item in later_preview_document[
+            "encounters"
+        ]
+        if item.get("passage_id")
+        == "passage_0002"
+    )
+
+    preview_state = preview_encounter[
+        "eliot_learning_state"
+    ]
+    later_preview_state = (
+        later_preview_encounter[
+            "eliot_learning_state"
+        ]
+    )
+
+    assert (
+        preview_state[
+            "learning_content_sha256"
+        ]
+        == later_preview_state[
+            "learning_content_sha256"
+        ]
+    )
+    assert (
+        preview_state[
+            "learning_state_sha256"
+        ]
+        != later_preview_state[
+            "learning_state_sha256"
+        ]
+    )
+    assert preview_state["questions"] == []
+    assert preview_state["ambiguities"] == []
 
     bad_analysis = deepcopy(
         preview_analysis
@@ -685,6 +752,20 @@ print(
     "Prévisualisation sans écriture :",
     preview_report["committed"]
     is False,
+)
+print(
+    "Hash de contenu stable dans le temps :",
+    preview_state["learning_content_sha256"]
+    == later_preview_state["learning_content_sha256"],
+)
+print(
+    "Hash d’état daté distinct :",
+    preview_state["learning_state_sha256"]
+    != later_preview_state["learning_state_sha256"],
+)
+print(
+    "Questions pronominales produites :",
+    len(preview_state["questions"]),
 )
 print(
     "Mauvaise empreinte refusée :",
