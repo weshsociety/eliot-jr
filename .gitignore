@@ -44,3 +44,5 @@ curriculum/journaux/*.lock
 
 # Sauvegardes locales vérifiées
 .backups/
+# Verrous transactionnels runtime
+.memory/reading_schema_v2.lock
