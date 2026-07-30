@@ -7,7 +7,7 @@ import json
 import re
 
 
-ANALYSIS_SCHEMA_VERSION = 2
+ANALYSIS_SCHEMA_VERSION = 3
 
 TOKEN_PATTERN = re.compile(
     r"[A-Za-z]+(?:[’'][A-Za-z]+)?"
@@ -469,6 +469,26 @@ def _raw_marker_matches(
                 ):
                     continue
 
+                if (
+                    group == "negation"
+                    and canonical == "no"
+                    and (
+                        (
+                            match.start() > 0
+                            and text[
+                                match.start() - 1
+                            ] in "-‑‒–—"
+                        )
+                        or (
+                            match.end() < len(text)
+                            and text[
+                                match.end()
+                            ] in "-‑‒–—"
+                        )
+                    )
+                ):
+                    continue
+
                 matches.append({
                     "group": group,
                     "canonical": canonical,
@@ -685,7 +705,7 @@ def _negation_candidates(
         dict[str, Any]
     ],
 ) -> list[dict[str, Any]]:
-    results = []
+    raw_candidates = []
 
     for marker in markers:
         if marker["group"] != "negation":
@@ -707,11 +727,7 @@ def _negation_candidates(
             )
         )
 
-        results.append({
-            "negation_id": (
-                f"negation_"
-                f"{len(results) + 1:04d}"
-            ),
+        raw_candidates.append({
             "status": (
                 "candidate_scope_not_"
                 "syntactically_resolved"
@@ -727,6 +743,63 @@ def _negation_candidates(
                     scope_end
                 ],
             },
+        })
+
+    ordered = sorted(
+        raw_candidates,
+        key=lambda item: (
+            item[
+                "candidate_scope"
+            ]["start"],
+            -(
+                item[
+                    "candidate_scope"
+                ]["end"]
+                - item[
+                    "candidate_scope"
+                ]["start"]
+            ),
+            item["marker"]["start"],
+        ),
+    )
+
+    selected = []
+
+    for candidate in ordered:
+        scope = candidate[
+            "candidate_scope"
+        ]
+
+        nested = any(
+            (
+                scope["start"]
+                >= existing[
+                    "candidate_scope"
+                ]["start"]
+                and scope["end"]
+                <= existing[
+                    "candidate_scope"
+                ]["end"]
+            )
+            for existing in selected
+        )
+
+        if nested:
+            continue
+
+        selected.append(
+            candidate
+        )
+
+    results = []
+
+    for candidate in selected:
+        results.append({
+            "negation_id": (
+                f"negation_"
+                f"{len(results) + 1:04d}"
+            ),
+            **candidate,
         })
 
     return results
@@ -947,6 +1020,10 @@ def analyse_logical_surface(
             ),
             "relations_are_interpreted": False,
             "negation_scopes_are_final": False,
+            "hyphenated_no_is_negation_scope": False,
+            "nested_negation_scopes_are_separate_claims": (
+                False
+            ),
             "references_are_resolved": False,
             "reference_forms_are_ambiguities": False,
             "ambiguity_requires_multiple_plausible_referents": True,

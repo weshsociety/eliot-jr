@@ -64,7 +64,7 @@ def live_hashes() -> dict[str, str]:
 before = live_hashes()
 analyses = {}
 
-for number in range(1, 5):
+for number in range(1, 6):
     passage_id = (
         f"passage_{number:04d}"
     )
@@ -187,6 +187,53 @@ assert (
     ]
 )
 
+
+assert (
+    canonicals(
+        "passage_0005",
+        "negation",
+    )
+    == [
+        "not",
+        "no",
+    ]
+)
+
+passage_0005_negations = analyses[
+    "passage_0005"
+]["candidate_negation_scopes"]
+
+assert len(
+    passage_0005_negations
+) == 1
+
+assert (
+    passage_0005_negations[0][
+        "marker"
+    ]["canonical"]
+    == "not"
+)
+
+assert (
+    passage_0005_negations[0][
+        "candidate_scope"
+    ]["text"]
+    == (
+        "not at once no government, "
+        "but at once a better government."
+    )
+)
+
+assert (
+    "no-government"
+    not in [
+        item[
+            "candidate_scope"
+        ]["text"]
+        for item in passage_0005_negations
+    ]
+)
+
 assert (
     analyses["passage_0003"][
         "surface_units"
@@ -201,6 +248,7 @@ expected_relation_counts = {
     "passage_0002": 1,
     "passage_0003": 3,
     "passage_0004": 1,
+    "passage_0005": 2,
 }
 
 expected_reference_counts = {
@@ -208,6 +256,7 @@ expected_reference_counts = {
     "passage_0002": 0,
     "passage_0003": 4,
     "passage_0004": 5,
+    "passage_0005": 3,
 }
 
 for passage_id, expected in expected_relation_counts.items():
@@ -318,6 +367,26 @@ print(
         "passage_0004",
         "negation",
     ),
+)
+print(
+    "Passage 0005 marqueurs de négation :",
+    canonicals(
+        "passage_0005",
+        "negation",
+    ),
+)
+print(
+    "Passage 0005 portées candidates :",
+    [
+        item[
+            "candidate_scope"
+        ]["text"]
+        for item in analyses[
+            "passage_0005"
+        ][
+            "candidate_negation_scopes"
+        ]
+    ],
 )
 print(
     "Relations par passage :",
