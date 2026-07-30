@@ -7,7 +7,7 @@ import json
 import re
 
 
-ANALYSIS_SCHEMA_VERSION = 3
+ANALYSIS_SCHEMA_VERSION = 4
 
 TOKEN_PATTERN = re.compile(
     r"[A-Za-z]+(?:[’'][A-Za-z]+)?"
@@ -699,6 +699,34 @@ def _relation_candidates(
     return relations
 
 
+def _bare_no_scope_right(
+    text: str,
+    end: int,
+) -> int:
+    """
+    Limite prudemment la portée d'un déterminant « no ».
+
+    Sans analyse syntaxique, une virgule fournit une frontière plus
+    fidèle qu'une fin de clause entière pour des groupes nominaux
+    comme « no government, but ... ».
+    """
+    hard_end = _nearest_boundary_right(
+        text,
+        end,
+    )
+
+    comma = text.find(
+        ",",
+        end,
+        hard_end,
+    )
+
+    if comma != -1:
+        return comma
+
+    return hard_end
+
+
 def _negation_candidates(
     text: str,
     markers: list[
@@ -712,12 +740,19 @@ def _negation_candidates(
             continue
 
         scope_start = marker["start"]
-        scope_end = (
-            _nearest_boundary_right(
+
+        if marker["canonical"] == "no":
+            scope_end = _bare_no_scope_right(
                 text,
                 marker["end"],
             )
-        )
+        else:
+            scope_end = (
+                _nearest_boundary_right(
+                    text,
+                    marker["end"],
+                )
+            )
 
         scope_start, scope_end = (
             _trim_span(
@@ -748,30 +783,28 @@ def _negation_candidates(
     ordered = sorted(
         raw_candidates,
         key=lambda item: (
-            item[
-                "candidate_scope"
-            ]["start"],
-            -(
-                item[
-                    "candidate_scope"
-                ]["end"]
-                - item[
-                    "candidate_scope"
-                ]["start"]
-            ),
             item["marker"]["start"],
+            item["marker"]["end"],
         ),
     )
 
-    selected = []
+    results = []
 
     for candidate in ordered:
+        candidate_id = (
+            f"negation_"
+            f"{len(results) + 1:04d}"
+        )
         scope = candidate[
             "candidate_scope"
         ]
 
-        nested = any(
-            (
+        parent_ids = [
+            existing[
+                "negation_id"
+            ]
+            for existing in results
+            if (
                 scope["start"]
                 >= existing[
                     "candidate_scope"
@@ -780,26 +813,30 @@ def _negation_candidates(
                 <= existing[
                     "candidate_scope"
                 ]["end"]
+                and (
+                    scope["start"]
+                    > existing[
+                        "candidate_scope"
+                    ]["start"]
+                    or scope["end"]
+                    < existing[
+                        "candidate_scope"
+                    ]["end"]
+                )
             )
-            for existing in selected
-        )
+        ]
 
-        if nested:
-            continue
-
-        selected.append(
-            candidate
-        )
-
-    results = []
-
-    for candidate in selected:
         results.append({
-            "negation_id": (
-                f"negation_"
-                f"{len(results) + 1:04d}"
-            ),
+            "negation_id": candidate_id,
             **candidate,
+            "scope_relation": (
+                "nested_candidate"
+                if parent_ids
+                else "top_level_candidate"
+            ),
+            "nested_within_negation_ids": (
+                parent_ids
+            ),
         })
 
     return results
@@ -1021,8 +1058,9 @@ def analyse_logical_surface(
             "relations_are_interpreted": False,
             "negation_scopes_are_final": False,
             "hyphenated_no_is_negation_scope": False,
-            "nested_negation_scopes_are_separate_claims": (
-                False
+            "bare_no_scope_stops_before_comma": True,
+            "nested_negation_scopes_are_separate_candidates": (
+                True
             ),
             "references_are_resolved": False,
             "reference_forms_are_ambiguities": False,

@@ -64,7 +64,7 @@ def live_hashes() -> dict[str, str]:
 before = live_hashes()
 analyses = {}
 
-for number in range(1, 6):
+for number in range(1, 7):
     passage_id = (
         f"passage_{number:04d}"
     )
@@ -205,34 +205,126 @@ passage_0005_negations = analyses[
 
 assert len(
     passage_0005_negations
-) == 1
+) == 2
 
-assert (
-    passage_0005_negations[0][
-        "marker"
-    ]["canonical"]
-    == "not"
-)
+assert [
+    item["marker"]["canonical"]
+    for item in passage_0005_negations
+] == [
+    "not",
+    "no",
+]
 
-assert (
-    passage_0005_negations[0][
+assert [
+    item[
         "candidate_scope"
     ]["text"]
-    == (
+    for item in passage_0005_negations
+] == [
+    (
         "not at once no government, "
         "but at once a better government."
-    )
+    ),
+    "no government",
+]
+
+assert (
+    passage_0005_negations[0][
+        "scope_relation"
+    ]
+    == "top_level_candidate"
 )
 
 assert (
-    "no-government"
-    not in [
-        item[
-            "candidate_scope"
-        ]["text"]
-        for item in passage_0005_negations
+    passage_0005_negations[1][
+        "scope_relation"
+    ]
+    == "nested_candidate"
+)
+
+assert (
+    passage_0005_negations[1][
+        "nested_within_negation_ids"
+    ]
+    == ["negation_0001"]
+)
+
+assert all(
+    not item[
+        "candidate_scope"
+    ]["text"].startswith(
+        "no-government"
+    )
+    for item in passage_0005_negations
+)
+
+
+assert (
+    canonicals(
+        "passage_0006",
+        "negation",
+    )
+    == [
+        "not",
+        "do not",
     ]
 )
+
+passage_0006_negations = analyses[
+    "passage_0006"
+]["candidate_negation_scopes"]
+
+assert len(
+    passage_0006_negations
+) == 2
+
+assert [
+    item[
+        "candidate_scope"
+    ]["text"]
+    for item in passage_0006_negations
+] == [
+    (
+        "not be a government in which "
+        "majorities do not virtually "
+        "decide right and wrong, but "
+        "conscience?"
+    ),
+    (
+        "do not virtually decide right "
+        "and wrong, but conscience?"
+    ),
+]
+
+assert (
+    passage_0006_negations[0][
+        "scope_relation"
+    ]
+    == "top_level_candidate"
+)
+
+assert (
+    passage_0006_negations[1][
+        "scope_relation"
+    ]
+    == "nested_candidate"
+)
+
+assert (
+    passage_0006_negations[1][
+        "nested_within_negation_ids"
+    ]
+    == ["negation_0001"]
+)
+
+assert sum(
+    sentence["is_question"]
+    for sentence in analyses[
+        "passage_0006"
+    ][
+        "surface_units"
+    ]["sentences"]
+) == 4
 
 assert (
     analyses["passage_0003"][
@@ -249,6 +341,7 @@ expected_relation_counts = {
     "passage_0003": 3,
     "passage_0004": 1,
     "passage_0005": 2,
+    "passage_0006": 0,
 }
 
 expected_reference_counts = {
@@ -257,6 +350,7 @@ expected_reference_counts = {
     "passage_0003": 4,
     "passage_0004": 5,
     "passage_0005": 3,
+    "passage_0006": 4,
 }
 
 for passage_id, expected in expected_relation_counts.items():
@@ -383,6 +477,26 @@ print(
         ]["text"]
         for item in analyses[
             "passage_0005"
+        ][
+            "candidate_negation_scopes"
+        ]
+    ],
+)
+print(
+    "Passage 0006 marqueurs de négation :",
+    canonicals(
+        "passage_0006",
+        "negation",
+    ),
+)
+print(
+    "Passage 0006 portées candidates :",
+    [
+        item[
+            "candidate_scope"
+        ]["text"]
+        for item in analyses[
+            "passage_0006"
         ][
             "candidate_negation_scopes"
         ]
