@@ -1,0 +1,66 @@
+{
+  "schema": "eliot-jr.human-provenance.v2",
+  "record_count": 1,
+  "records": [
+    {
+      "record_id": "prov_trinity_point_de_bascule_0001",
+      "investigation_id": "epstein_trou_de_souris",
+      "source_path": "000_synthèse/POINT_DE_BASCULE.md",
+      "source_sha256": "1457c14c75f5a7aa84e772eac504aeabb8b071a6354d06edc28be54fe3724ee8",
+      "contributor": "Trinity",
+      "contributor_type": "human_witness",
+      "contribution_layer": "external_provenance",
+      "provenance_type": "direct_observation_attestation",
+      "attestation_text": "J’y étais, je l’ai vu.",
+      "scope": {
+        "applies_to": "la date, l’ordre et les intervalles temporels rapportés aux lignes 40 à 42",
+        "claim_locator_status": "exact_lines",
+        "line_start": 40,
+        "line_end": 42,
+        "claim_locators": [
+          {
+            "line": 40,
+            "verbatim_excerpt": "- **28 février 2026** : Frappes conjointes US/Israël",
+            "attested_aspect": "event_date",
+            "status": "attested_by_trinity"
+          },
+          {
+            "line": 41,
+            "verbatim_excerpt": "- **Huit heures avant** : Hegseth blacklistait Anthropic",
+            "attested_aspect": "relative_timing_before",
+            "status": "attested_by_trinity"
+          },
+          {
+            "line": 42,
+            "verbatim_excerpt": "- **Quelques heures plus tard** : OpenAI signait avec le Pentagone",
+            "attested_aspect": "relative_timing_after",
+            "status": "attested_by_trinity"
+          }
+        ],
+        "explicitly_excluded": [
+          {
+            "line": 43,
+            "reason": "interprétation structurelle distincte de la chronologie observée"
+          }
+        ],
+        "does_not_automatically_apply_to": [
+          "les autres affirmations du document",
+          "les liens causaux proposés",
+          "les interprétations structurelles"
+        ]
+      },
+      "epistemic_status": {
+        "observed_chronology": "attested_by_trinity",
+        "event_date": "attested_by_trinity",
+        "relative_order": "attested_by_trinity",
+        "causal_link": "not_established_by_attestation",
+        "external_corroboration": "separate_optional_layer"
+      },
+      "recorded_at": "2026-08-01T16:08:17.232040+00:00",
+      "llm_used": false,
+      "core_modified": false,
+      "relation_created": false,
+      "locator_updated_at": "2026-08-01T16:11:21.756476+00:00"
+    }
+  ]
+}

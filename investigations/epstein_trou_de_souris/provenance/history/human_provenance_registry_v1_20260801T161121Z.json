@@ -1,0 +1,37 @@
+{
+  "schema": "eliot-jr.human-provenance.v1",
+  "record_count": 1,
+  "records": [
+    {
+      "record_id": "prov_trinity_point_de_bascule_0001",
+      "investigation_id": "epstein_trou_de_souris",
+      "source_path": "000_synthèse/POINT_DE_BASCULE.md",
+      "source_sha256": "1457c14c75f5a7aa84e772eac504aeabb8b071a6354d06edc28be54fe3724ee8",
+      "contributor": "Trinity",
+      "contributor_type": "human_witness",
+      "contribution_layer": "external_provenance",
+      "provenance_type": "direct_observation_attestation",
+      "attestation_text": "J’y étais, je l’ai vu.",
+      "scope": {
+        "applies_to": "la date et l’ordre des événements explicitement confirmés par Trinity",
+        "claim_locator_status": "pending",
+        "line_start": null,
+        "line_end": null,
+        "does_not_automatically_apply_to": [
+          "les autres affirmations du document",
+          "les liens causaux proposés",
+          "les interprétations structurelles"
+        ]
+      },
+      "epistemic_status": {
+        "observed_chronology": "attested_by_trinity",
+        "causal_link": "not_established_by_attestation",
+        "external_corroboration": "separate_optional_layer"
+      },
+      "recorded_at": "2026-08-01T16:08:17.232040+00:00",
+      "llm_used": false,
+      "core_modified": false,
+      "relation_created": false
+    }
+  ]
+}
