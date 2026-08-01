@@ -46,3 +46,4 @@ curriculum/journaux/*.lock
 .backups/
 # Verrous transactionnels runtime
 .memory/reading_schema_v2.lock
+.pytest_cache/
