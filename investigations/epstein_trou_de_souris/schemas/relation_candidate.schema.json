@@ -1,0 +1,409 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://weshsociety.org/schemas/eliot-jr/relation-candidate.v1.json",
+  "title": "Eliot-Jr relation candidate",
+  "description": "Relation externe sourcée, non validée comme vraie et non publiée automatiquement.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "relation_id",
+    "candidate_sha256",
+    "investigation_id",
+    "subject",
+    "predicate",
+    "object",
+    "basis",
+    "status",
+    "source",
+    "qualifiers",
+    "epistemic_state",
+    "extraction",
+    "review"
+  ],
+  "properties": {
+    "schema": {
+      "const": "eliot-jr.relation-candidate.v1"
+    },
+    "relation_id": {
+      "type": "string",
+      "pattern": "^rel_[a-f0-9]{24}$"
+    },
+    "candidate_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "investigation_id": {
+      "const": "epstein_trou_de_souris"
+    },
+    "subject": {
+      "$ref": "#/$defs/entity"
+    },
+    "predicate": {
+      "$ref": "#/$defs/predicate"
+    },
+    "object": {
+      "$ref": "#/$defs/entity"
+    },
+    "basis": {
+      "enum": [
+        "explicit_sentence",
+        "table",
+        "metadata",
+        "cooccurrence",
+        "inference",
+        "human_attestation",
+        "guild_contribution"
+      ]
+    },
+    "status": {
+      "enum": [
+        "candidate",
+        "accepted_for_encounter",
+        "rejected",
+        "needs_context",
+        "contested"
+      ]
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "qualifiers": {
+      "$ref": "#/$defs/qualifiers"
+    },
+    "epistemic_state": {
+      "$ref": "#/$defs/epistemicState"
+    },
+    "extraction": {
+      "$ref": "#/$defs/extraction"
+    },
+    "review": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/review"}
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {"const": "accepted_for_encounter"}
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "properties": {
+              "source_state": {"const": "unchanged"}
+            }
+          },
+          "review": {
+            "$ref": "#/$defs/acceptedReview"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "basis": {"const": "inference"}
+        },
+        "required": ["basis"]
+      },
+      "then": {
+        "properties": {
+          "qualifiers": {
+            "properties": {
+              "inference_note": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["inference_note"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "basis": {"const": "human_attestation"}
+        },
+        "required": ["basis"]
+      },
+      "then": {
+        "properties": {
+          "qualifiers": {
+            "properties": {
+              "attributed_to": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["attributed_to"]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nullableEntityId": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{1,127}$"
+        },
+        {"type": "null"}
+      ]
+    },
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surface", "entity_id", "entity_type"],
+      "properties": {
+        "surface": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "entity_id": {
+          "$ref": "#/$defs/nullableEntityId"
+        },
+        "entity_type": {
+          "enum": [
+            "person",
+            "organization",
+            "institution",
+            "event",
+            "place",
+            "document",
+            "concept",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "predicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surface", "normalized"],
+      "properties": {
+        "surface": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "normalized": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{1,63}$"
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_path",
+        "source_sha256",
+        "source_current_sha256",
+        "source_state",
+        "line_start",
+        "line_end",
+        "verbatim_excerpt",
+        "claim_candidate_id"
+      ],
+      "properties": {
+        "source_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "not": {"pattern": "(^|/)\\.\\.(/|$)"}
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_current_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_state": {
+          "enum": ["unchanged", "changed", "missing"]
+        },
+        "line_start": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "line_end": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "verbatim_excerpt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12000
+        },
+        "claim_candidate_id": {
+          "type": "string",
+          "pattern": "^claim_[0-9]{5,}$"
+        }
+      }
+    },
+    "qualifiers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "negated",
+        "hypothetical",
+        "causal_claim_in_source",
+        "attributed_to",
+        "temporal_expression",
+        "inference_note"
+      ],
+      "properties": {
+        "negated": {"type": "boolean"},
+        "hypothetical": {"type": "boolean"},
+        "causal_claim_in_source": {"type": "boolean"},
+        "attributed_to": {
+          "oneOf": [
+            {"type": "string", "minLength": 1, "maxLength": 500},
+            {"type": "null"}
+          ]
+        },
+        "temporal_expression": {
+          "oneOf": [
+            {"type": "string", "minLength": 1, "maxLength": 500},
+            {"type": "null"}
+          ]
+        },
+        "inference_note": {
+          "oneOf": [
+            {"type": "string", "minLength": 1, "maxLength": 2000},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "epistemicState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "truth_status",
+        "causality",
+        "confidence",
+        "contradictions"
+      ],
+      "properties": {
+        "truth_status": {"const": "not_assessed"},
+        "causality": {"const": "not_established"},
+        "confidence": {"const": "not_assessed"},
+        "contradictions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^rel_[a-f0-9]{24}$"
+          }
+        }
+      }
+    },
+    "extraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "created_by",
+        "extractor_version",
+        "created_at_utc",
+        "llm_used",
+        "core_modified",
+        "octopus_modified",
+        "publication_performed"
+      ],
+      "properties": {
+        "created_by": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "extractor_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "created_at_utc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "llm_used": {"const": false},
+        "core_modified": {"const": false},
+        "octopus_modified": {"const": false},
+        "publication_performed": {"const": false}
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "decision_type",
+        "reviewed_by",
+        "reviewed_at_utc",
+        "comment",
+        "reviewed_candidate_sha256",
+        "explicit_human_confirmation"
+      ],
+      "properties": {
+        "decision": {
+          "enum": [
+            "accepted_for_encounter",
+            "rejected",
+            "needs_context",
+            "contested"
+          ]
+        },
+        "decision_type": {
+          "enum": ["human", "collective", "mechanical"]
+        },
+        "reviewed_by": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "reviewed_at_utc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "comment": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "reviewed_candidate_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "explicit_human_confirmation": {
+          "type": "boolean"
+        }
+      }
+    },
+    "acceptedReview": {
+      "allOf": [
+        {"$ref": "#/$defs/review"},
+        {
+          "properties": {
+            "decision": {"const": "accepted_for_encounter"},
+            "decision_type": {"enum": ["human", "collective"]},
+            "explicit_human_confirmation": {"const": true}
+          }
+        }
+      ]
+    }
+  }
+}
