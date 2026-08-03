@@ -4,7 +4,12 @@ id: epstein_trou_de_souris
 statut: active
 ouverte_le: 2026-08-01T10:36:00+02:00
 coordination: Trinity
-vault_obsidian: non_localise_sur_le_vps
+vault_obsidian: plan_mondial
+vault_local_sur_vps: false
+acces_obsidian: local_rest_api
+acces_authentifie: true
+acces_mode: read_only
+scope_obsidian: epstein_investigation
 bibliotheque_distante: wikicrypto.xyz
 noyau_eliot_jr_modifie: false
 ---

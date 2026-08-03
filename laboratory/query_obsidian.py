@@ -315,7 +315,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Interrogation documentaire en lecture seule "
-            "du coffre Obsidian plan mondial"
+            "du coffre Obsidian plan_mondial"
         )
     )
 

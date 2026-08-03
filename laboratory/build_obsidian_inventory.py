@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CLIENT = ROOT / "connectors/obsidian/read_only_client.py"
 OUTPUT = ROOT / "laboratory/index/obsidian_inventory.json"
+VAULT_NAME = "plan_mondial"
 
 DIRECTORIES = (
     "000_synthèse",
@@ -120,7 +121,7 @@ def main() -> int:
     inventory = {
         "schema": "eliot-jr.obsidian-inventory.v1",
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "vault": "plan mondial",
+        "vault": VAULT_NAME,
         "access_mode": "read_only",
         "llm_used": False,
         "document_count": len(documents),
